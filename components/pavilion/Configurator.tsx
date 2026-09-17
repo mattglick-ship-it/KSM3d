@@ -48,7 +48,6 @@ const FINISH_IMAGES: Record<string, string> = {
   "hand-peeled": finishHandPeeledAsset.url,
   "hatchet-hand-peeled": finishHatchetAsset.url,
 };
-import { AdminAutosave } from "@/components/pavilion/AdminAutosave";
 import { HAMMER20_BAKED_OFFSETS_IN, HAMMER20_BAKED_SCALES, HAMMER20_BAKED_PIECE_ADJUSTS } from "@/components/pavilion/hammer20Baked";
 import {
   HAMMER16_BAKED_PIECE_ADJUSTS,
@@ -1911,7 +1910,6 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
     <SnowRailAdjustContext.Provider value={snowRailAdjust}>
     <div className={cn("flex w-full bg-canvas font-sans text-ink overflow-hidden", mode === "admin" ? "h-full" : "h-screen")}>
       <Toaster position="bottom-left" />
-      {isAdmin && <AdminAutosave />}
       {/* Left Sidebar */}
       {leftCollapsed && (
         <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">

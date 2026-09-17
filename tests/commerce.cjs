@@ -12,6 +12,12 @@ require.cache[require.resolve('../lib/ksm-service.server.ts')]={exports:{ksmServ
 const payload={design:initialDesign,customer:{name:'Offline Test',email:'test@example.invalid',phone:'00000',fulfillment:'delivery',address:'Offline address',notes:''},projectName:'Offline test',submissionId:'00000000-0000-4000-8000-000000000001',total:1};
 const req=(data)=>new Request('https://example.invalid/api/pavilion/quote',{method:'POST',headers:{Origin:'https://example.invalid','Content-Type':'application/json'},body:JSON.stringify(data)});
 (async()=>{
+ const quoteRoute=require('../app/api/pavilion/quote/route.ts');
+ const before=calls.length;
+ for(const [body,origin,expected] of [['{','https://example.invalid',400],['{}','https://other.invalid',403],['x'.repeat(2000001),'https://example.invalid',413],['{}','https://example.invalid',400]]){
+  const response=await quoteRoute.POST(new Request('https://example.invalid/api/pavilion/quote',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body}));assert.equal(response.status,expected);
+ }
+ assert.equal(calls.length,before,'Rejected requests must not contact external services');
  const quote=await require('../app/api/pavilion/quote/route.ts').POST(req(payload));assert.equal(quote.status,200);assert.deepEqual(calls.find(c=>c.name==='capture-pavilion-lead').body.config.delivery,{miles:25,cost:100,quoteRequired:false});
  const checkout=await require('../app/api/pavilion/checkout/route.ts').POST(req(payload));assert.equal(checkout.status,200);assert.equal(calls.find(c=>c.name==='square-checkout').body.items[0].unitPrice,2500);
  const status=await require('../app/api/pavilion/payment-status/route.ts').POST(req({orderId:'offline-order',force:true}));assert.equal((await status.json()).paid,false);assert.deepEqual(calls.at(-1).body,{orderId:'offline-order'});

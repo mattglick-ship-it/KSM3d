@@ -63,6 +63,7 @@ export function AdminAutosave() {
   };
 
   const recompute = () => {
+    if (statusRef.current === "saving") return;
     const current = readSnapshot();
     const equal = snapshotsEqual(current, baselineRef.current);
     if (!equal && statusRef.current !== "dirty") setStatusBoth("dirty");
@@ -99,7 +100,7 @@ export function AdminAutosave() {
       if (!e.key || e.key.startsWith(KEY_PREFIX)) recompute();
     };
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (statusRef.current === "dirty") {
+      if (statusRef.current === "dirty" || statusRef.current === "saving") {
         e.preventDefault();
         e.returnValue = "";
       }
@@ -136,6 +137,7 @@ export function AdminAutosave() {
   }, []);
 
   const handleSave = async () => {
+    if (statusRef.current === "saving") return;
     setStatusBoth("saving");
     setErrorMsg(null);
     try {
@@ -174,7 +176,7 @@ export function AdminAutosave() {
         return;
       }
       baselineRef.current = latest;
-      setStatusBoth("saved");
+      setStatusBoth(snapshotsEqual(readSnapshot(), latest) ? "saved" : "dirty");
       if (savedTimerRef.current != null) window.clearTimeout(savedTimerRef.current);
       savedTimerRef.current = window.setTimeout(() => {
         if (statusRef.current === "saved") setStatusBoth("idle");
