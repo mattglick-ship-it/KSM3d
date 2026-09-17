@@ -121,6 +121,14 @@ export function computeQuote(sel: Selection, data: PricingDoc): Quote {
   }
 
 
+  // Snow retention is priced per complete pavilion package, by size.
+  // Missing or invalid catalog amounts remain explicitly unpriced.
+  if (sel.roof !== "shingles") {
+    for (const [key, label] of [["snowGuards", "Snow guards"], ["snowRail", "Snow rail"]] as const) {
+      if (!sel.config?.[key]) continue;
+      add(label, snowOptionAmount(data, sel.sizeId, key));
+    }
+  }
   const total = lines.reduce((acc, l) => acc + l.amount, 0);
   return {
     total,
@@ -185,3 +193,8 @@ export const fmtUSD = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 
+
+export function snowOptionAmount(data: PricingDoc, sizeId: string, key: "snowGuards" | "snowRail"): number | null {
+  const amount = data.options[key]?.price?.amounts?.[sizeId];
+  return typeof amount === "number" && Number.isFinite(amount) && amount >= 0 ? amount : null;
+}

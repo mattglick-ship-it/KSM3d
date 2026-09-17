@@ -1,4 +1,5 @@
 "use client";
+import {NATURAL_PINE_BEAM,NATURAL_PINE_DECK,NATURAL_PINE_BEAM_KEY,NATURAL_PINE_DECK_KEY} from '@/lib/natural-pine';
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 const useServerFn = <T,>(fn:T):T => fn;
@@ -1220,8 +1221,8 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
   const [grassTint, setGrassTint] = usePersistedState<string>("pav.grassTint", "#c8cfb8");
   
   const [grassTexture, setGrassTexture] = usePersistedState<number>("pav.grassTexture", 1);
-  const [rawBeamColor, setRawBeamColor] = usePersistedState<string>("pav.rawBeamColor", "#d5b489");
-  const [rawDeckColor, setRawDeckColor] = usePersistedState<string>("pav.rawDeckColor", "#ffffff");
+  const [rawBeamColor, setRawBeamColor] = usePersistedState<string>(NATURAL_PINE_BEAM_KEY, NATURAL_PINE_BEAM);
+  const [rawDeckColor, setRawDeckColor] = usePersistedState<string>(NATURAL_PINE_DECK_KEY, NATURAL_PINE_DECK);
   const [grainPickMode, setGrainPickMode] = useState(false);
   const [selectPickMode, setSelectPickMode] = useState(false);
   const [pieceEditEnabled, setPieceEditEnabled] = usePersistedState<boolean>("pav.pieceEditEnabled", false);

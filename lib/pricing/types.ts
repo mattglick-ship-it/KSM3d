@@ -62,6 +62,8 @@ export type PricingDoc = {
     decorativeTrussPlates: { label: string; ui: string; price: PriceModel };
     overhangFaceboard: { label: string; ui: string; price: PriceModel };
     texturedMetal: { label: string; ui: string; price: PriceModel };
+    snowGuards?: { price: { model: "bySize"; amounts: Record<string, number | null> } };
+    snowRail?: { price: { model: "bySize"; amounts: Record<string, number | null> } };
     timberFinish: { label: string; ui: string; choices: Array<{ id: FinishId; label: string; price: PriceModel }> };
   };
   sizes: SizeRow[];

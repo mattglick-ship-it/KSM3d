@@ -11,7 +11,7 @@ export const quoteRequestSchema=z.object({design:designSchema,customer:customerS
 export function pavilionSummary(design:Design,projectName='My KSM pavilion',pricing:PricingDoc=catalog as unknown as PricingDoc){
  const c=design.config,roof=ROOF_MATERIALS.find(x=>x.id===c.roofId)!;
  const quote=computeQuote(selectionFromConfig(c,{beamStained:!!design.tableStain,deckStained:!!design.deckStain}),pricing);
- const pending=[...quote.callForPricing,...(c.snowGuards?['Snow guards']:[]),...(c.snowRail?['Snow rail']:[])];
+ const pending=quote.callForPricing;
  return {projectName,model:`${TRUSS_STYLES.find(x=>x.id===c.truss)?.name} Pavilion Package`,trussStyle:TRUSS_STYLES.find(x=>x.id===c.truss)?.name,roofStyle:'Gable',size:`${c.width} × ${c.length} ft`,postHeight:`${c.height} ft`,species:'Eastern White Pine',timberFinish:WOOD_FINISHES.find(x=>x.id===c.woodId)?.name,beamStain:stainName(design.tableStain),deckboardStain:stainName(design.deckStain),roofMaterial:`${roof.type==='standing-seam'?'Standing seam':roof.type==='metal'?'Ribbed metal':'Shingles'} — ${roof.name}`,rafterTail:c.rafterTail==='scroll'?'Scroll cut':'Standard',snowGuards:c.snowGuards,snowRail:!!c.snowRail,upgrades:[c.trussPlates?'Decorative truss plates':null,c.gableFascia?'Gable faceboard':null,c.gableOverhang?'Gable overhang':null,c.hideBackTruss?'Rear truss omitted':null,c.snowGuards?'Snow guards':null,c.snowRail?'Snow rail':null].filter(Boolean) as string[],lineItems:quote.lines.map(l=>({label:l.label,amount:fmtUSD(l.amount)})),total:fmtUSD(quote.total),totalAmount:quote.total,priceNote:pending.length?'Estimate · some options require a quote':'Estimate · excludes tax and delivery',pending,leadTime:'4–6 weeks from order confirmation'};
 }
 export function designLink(design:Design){

@@ -222,6 +222,18 @@ function ManualUpcharges({
       }
       hammer.price = { model: "bySize", amounts };
     }
+    for (const key of ["snowGuards", "snowRail"] as const) {
+      const amounts: Record<string, number | null> = {};
+      for (const size of doc.sizes) {
+        const input = draft[key][size.id]?.trim() ?? "";
+        const amount = input === "" ? null : Number(input);
+        if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
+          toast.error("Snow-retention prices must be nonnegative amounts or blank."); return;
+        }
+        amounts[size.id] = amount;
+      }
+      next.options[key] = {price: {model: "bySize", amounts}};
+    }
     await onSave(next);
   };
 
@@ -259,6 +271,13 @@ function ManualUpcharges({
           </div>
         </div>
 
+        <div>
+          <h3 className="text-base font-semibold">Snow retention — complete pavilion package</h3>
+          <p className="text-sm text-muted-foreground mb-3">Enter KSM's added price for both roof slopes. Blank means a quote is required.</p>
+          {doc.sizes.map(size => <div key={size.id} className="grid grid-cols-2 gap-3 mb-3">
+            {(["snowGuards", "snowRail"] as const).map(key => <Money key={key} label={`${size.label} · ${key === "snowGuards" ? "Snow guards" : "Snow rail"}`} value={draft[key][size.id] ?? ""} onChange={v => setDraft({...draft, [key]: {...draft[key], [size.id]: v}})} />)}
+          </div>)}
+        </div>
         <Button onClick={apply} disabled={saving}>{saving ? "Saving…" : "Save upcharges"}</Button>
       </CardContent>
     </Card>
@@ -284,6 +303,8 @@ function Money({ label, value, onChange, small }: { label: string; value: string
 }
 
 type Draft = {
+  snowGuards: Record<string, string>;
+  snowRail: Record<string, string>;
   archedKing: string;
   scrollCut: string;
   decorativePlates: string;
@@ -310,6 +331,8 @@ function extractDraft(doc: PricingDoc): Draft {
     decorativePlates: flat(doc.options.decorativeTrussPlates.price as { model: string; amount?: number | null }),
     faceboard: flat(doc.options.overhangFaceboard.price as { model: string; amount?: number | null }),
     texturedMetal: flat(doc.options.texturedMetal.price as { model: string; amount?: number | null }),
+    snowGuards: Object.fromEntries(doc.sizes.map(s => [s.id, String(doc.options.snowGuards?.price.amounts[s.id] ?? "")])),
+    snowRail: Object.fromEntries(doc.sizes.map(s => [s.id, String(doc.options.snowRail?.price.amounts[s.id] ?? "")])),
     hammerBySize,
   };
 }

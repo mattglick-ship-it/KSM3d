@@ -1,3 +1,5 @@
+import {NATURAL_PINE_BEAM,NATURAL_PINE_DECK} from '@/lib/natural-pine';
+import naturalPineDeckAsset from '@/assets/pine_planks.jpg.asset.json';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, useId, type ReactNode } from "react";
 import { useLoader } from "@react-three/fiber";
 import { PieceAdjuster, type PieceAdjust } from "./PieceAdjuster";
@@ -363,7 +365,7 @@ function useScrollCutRafterGeometry(runX: number, t: number, depth: number) {
 
 }
 
-/** Tileable wood plank texture for roof underside. Brightened to a light pine tone. */
+/** Unstained decking uses the knotty pine photo; stained decking retains its existing map. */
 function useUndersideTexture(
   repeatX: number,
   repeatY: number,
@@ -371,19 +373,21 @@ function useUndersideTexture(
   offsetX = 0,
   offsetY = 0,
 ) {
-  const tex = useLoader(THREE.TextureLoader, roofUndersideAsset.url) as THREE.Texture;
+  const natural = useContext(NaturalDeckContext);
+  const tex = useLoader(THREE.TextureLoader, natural ? naturalPineDeckAsset.url : roofUndersideAsset.url) as THREE.Texture;
   return useMemo(() => {
     const t = tex.clone();
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.center.set(0.5, 0.5);
-    t.rotation = rotate + Math.PI / 2;
+    // Pine photo grain is vertical; the original plank map grain is horizontal.
+    t.rotation = rotate + (natural ? 0 : Math.PI / 2);
     t.repeat.set(repeatX, repeatY);
     t.offset.set(offsetX, offsetY);
     t.anisotropy = 8;
     t.colorSpace = THREE.SRGBColorSpace;
     t.needsUpdate = true;
     return t;
-  }, [tex, repeatX, repeatY, rotate, offsetX, offsetY]);
+  }, [tex, natural, repeatX, repeatY, rotate, offsetX, offsetY]);
 }
 
 export const ShingleScaleContext = createContext<number>(1);
@@ -395,7 +399,8 @@ export const ShingleBumpScaleContext = createContext<number>(1.2);
 export const ShingleRoughnessContext = createContext<number>(0.95);
 /** Color tint applied to the roof underside / deckboard planks.
  *  Use "#ffffff" for no tint (natural plank texture). */
-export const DeckStainContext = createContext<string>("#ffffff");
+export const DeckStainContext = createContext<string>(NATURAL_PINE_DECK);
+const NaturalDeckContext = createContext(true);
 
 /** Load a tileable shingle texture; rotated so courses run along the ridge. */
 function useShingleTexture(dimX: number, dimY: number) {
@@ -1146,8 +1151,8 @@ function SnowGuards({
     const footH = 0.85 * IN;     // height of side feet at outer edge
     const shoulderZ = 1.45 * IN; // half-width of the ogee shoulders
     const shoulderY = 1.85 * IN; // height of the side shoulders
-    const slotW = 0.55 * IN;     // width of central seam slot
-    const slotH = 1.55 * IN;     // height of seam slot
+    const slotW = 1.16 * IN;     // width of central seam slot
+    const slotH = 1.7 * IN;     // height of seam slot
     const archOver = 0.45 * IN;  // how high the slot's arch rises
 
     const s = new THREE.Shape();
@@ -1211,7 +1216,7 @@ function SnowGuards({
     const x = i % 2 === 0 ? row1X : row2X;
 
     items.push(
-      <group key={i} position={[x, 0.005 + 1 * IN, z]}>
+      <group key={i} position={[x, 0.026, z]}>
         {/* Rotate so the decorative plate faces down-slope toward the eave.
             Extrusion (+Z local) maps to up-slope on the roof. */}
         <group rotation={[0, eaveSign * Math.PI / 2, 0]}>
@@ -4531,7 +4536,7 @@ export const DEFAULT_SHINGLE_CAP_TEXTURE_SCALE: ShingleCapTextureScale = { x: 1,
 export const ShingleCapTextureScaleContext = createContext<ShingleCapTextureScale>(DEFAULT_SHINGLE_CAP_TEXTURE_SCALE);
 
 
-export function Pavilion({ config, showRoof = true, showTrusses = true, showFrame = true, showRafters = true, grainAdjust, grainPieces, grainFaces, handPeeledRandom = DEFAULT_HAND_PEELED_RANDOM, scrollCapRotation = DEFAULT_SCROLL_CAP_ROTATION, rakeTrimAdjust = DEFAULT_RAKE_TRIM_ADJUST, metalRakeTrimAdjust = DEFAULT_METAL_RAKE_TRIM_ADJUST, backRakeRotate = DEFAULT_BACK_RAKE_ROTATE, backRakeRotation = DEFAULT_BACK_RAKE_ROTATION, shingleScale = 1, shingleContrast = 1.55, shingleBrightness = 0.92, shingleSaturate = 1.05, shingleBumpScale = 1.2, shingleRoughness = 0.95, shingleCapRotation = 0, shingleCapScale = DEFAULT_SHINGLE_CAP_SCALE, shingleCapOffset = DEFAULT_SHINGLE_CAP_OFFSET, shingleCapTextureScale = DEFAULT_SHINGLE_CAP_TEXTURE_SCALE, hammerYOffset = 0, hammerScale = { x: 1, y: 1, z: 1 }, hammerGroupOffset = { x: 0, y: 0, z: 0 }, hammerCorbelScale = { x: 1, y: 1, z: 1 }, hammerCorbelOffset = { x: 0, y: 0, z: 0 }, hammerCorbelRotation = { x: 0, y: 0, z: 0 }, hammerPieceOffsets, hammerPieceScales, hammerUniformProfile55 = false, hammer12Glb = HAMMER12_GLB_DEFAULT_ADJUST, hammer14Glb = HAMMER14_GLB_DEFAULT_ADJUST, hammer16Glb = HAMMER16_GLB_DEFAULT_ADJUST, hammer20Glb = HAMMER20_GLB_DEFAULT_ADJUST, plateOffset = { x: 0, y: 0, z: 0 }, plateRotation = { x: 0, y: 0, z: 0 }, plateSizeScale = 1, webPlateOffset = { x: 0, y: 0, z: 0 }, webPlateRotation = { x: 0, y: 0, z: 0 }, webPlateSizeScale = 1, vPlateSurfaceInset = 0, webPlateSurfaceInset = 0, peakPlateOffset = { x: 0, y: 0, z: 0 }, peakPlateRotation = { x: 0, y: 0, z: 0 }, peakPlateSizeScale = 1, peakPlateSurfaceInset = 0, archPlateOffset = { x: 0, y: 0, z: 0 }, archPlateRotation = { x: 0, y: 0, z: 0 }, archPlateSizeScale = { x: 1, y: 1, z: 1 }, simplePlateOffset = { x: 0, y: 0, z: 0 }, simplePlateRotation = { x: 0, y: 0, z: 0 }, simplePlateSizeScale = { x: 1, y: 1, z: 1 }, topPlateOffset = { x: 0, y: 0, z: 0 }, topPlateRotation = { x: 0, y: 0, z: 0 }, topPlateSizeScale = { x: 1, y: 1, z: 1 }, webPlate2Offset = { x: 0, y: 0, z: 0 }, webPlate2Rotation = { x: 0, y: 0, z: 0 }, webPlate2SizeScale = { x: 1, y: 1, z: 1 }, kingPeakPlateOffset = { x: 0, y: 0, z: 0 }, kingPeakPlateRotation = { x: 0, y: 0, z: 0 }, kingPeakPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlateOffset = { x: 0, y: 0, z: 0 }, kingHeelPlateRotation = { x: 0, y: 0, z: 0 }, kingHeelPlateSizeScale = { x: 1, y: 1, z: 1 }, kingWebPlateOffset = { x: 0, y: 0, z: 0 }, kingWebPlateRotation = { x: 0, y: 0, z: 0 }, kingWebPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlate2Offset = { x: 0, y: 0, z: 0 }, kingHeelPlate2Rotation = { x: 0, y: 0, z: 0 }, kingHeelPlate2SizeScale = { x: 1, y: 1, z: 1 }, trussPlateExtraOffsets, pavilionStain = null, deckStain = null, stainOpacity = 0.9, stainDarkness = 0.3, rawBeamColor = "#fffaf2", rawDeckColor = "#ffffff", roofOnlyLiftIn = 0, onRootMount, onGrainPick, pieceAdjusts }: { config: PavilionConfig; showRoof?: boolean; showTrusses?: boolean; showFrame?: boolean; showRafters?: boolean; grainAdjust?: GrainAdjust; grainPieces?: GrainPieceAdjust; grainFaces?: GrainFaceAdjust; handPeeledRandom?: HandPeeledRandom; scrollCapRotation?: ScrollCapRotation; rakeTrimAdjust?: RakeTrimAdjust; metalRakeTrimAdjust?: RakeTrimAdjust; backRakeRotate?: boolean; backRakeRotation?: BackRakeRotation; shingleScale?: number; shingleContrast?: number; shingleBrightness?: number; shingleSaturate?: number; shingleBumpScale?: number; shingleRoughness?: number; shingleCapRotation?: number; shingleCapScale?: ShingleCapScale; shingleCapOffset?: ShingleCapOffset; shingleCapTextureScale?: ShingleCapTextureScale; hammerYOffset?: number; hammerScale?: { x: number; y: number; z: number }; hammerGroupOffset?: { x: number; y: number; z: number }; hammerCorbelScale?: { x: number; y: number; z: number }; hammerCorbelOffset?: { x: number; y: number; z: number }; hammerCorbelRotation?: { x: number; y: number; z: number }; hammerPieceOffsets?: Record<string, { x: number; y: number; z: number }>; hammerPieceScales?: Record<string, { x: number; y: number; z: number }>; hammerUniformProfile55?: boolean; hammer12Glb?: Hammer12GlbAdjust; hammer14Glb?: Hammer14GlbAdjust; hammer16Glb?: Hammer16GlbAdjust; hammer20Glb?: Hammer20GlbAdjust; plateOffset?: { x: number; y: number; z: number }; plateRotation?: { x: number; y: number; z: number }; plateSizeScale?: number; webPlateOffset?: { x: number; y: number; z: number }; webPlateRotation?: { x: number; y: number; z: number }; webPlateSizeScale?: number; vPlateSurfaceInset?: number; webPlateSurfaceInset?: number; peakPlateOffset?: { x: number; y: number; z: number }; peakPlateRotation?: { x: number; y: number; z: number }; peakPlateSizeScale?: number; peakPlateSurfaceInset?: number; archPlateOffset?: { x: number; y: number; z: number }; archPlateRotation?: { x: number; y: number; z: number }; archPlateSizeScale?: { x: number; y: number; z: number }; simplePlateOffset?: { x: number; y: number; z: number }; simplePlateRotation?: { x: number; y: number; z: number }; simplePlateSizeScale?: { x: number; y: number; z: number }; topPlateOffset?: { x: number; y: number; z: number }; topPlateRotation?: { x: number; y: number; z: number }; topPlateSizeScale?: { x: number; y: number; z: number }; webPlate2Offset?: { x: number; y: number; z: number }; webPlate2Rotation?: { x: number; y: number; z: number }; webPlate2SizeScale?: { x: number; y: number; z: number }; kingPeakPlateOffset?: { x: number; y: number; z: number }; kingPeakPlateRotation?: { x: number; y: number; z: number }; kingPeakPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlateOffset?: { x: number; y: number; z: number }; kingHeelPlateRotation?: { x: number; y: number; z: number }; kingHeelPlateSizeScale?: { x: number; y: number; z: number }; kingWebPlateOffset?: { x: number; y: number; z: number }; kingWebPlateRotation?: { x: number; y: number; z: number }; kingWebPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlate2Offset?: { x: number; y: number; z: number }; kingHeelPlate2Rotation?: { x: number; y: number; z: number }; kingHeelPlate2SizeScale?: { x: number; y: number; z: number }; trussPlateExtraOffsets?: TrussPlateExtraOffsets; pavilionStain?: string | null; deckStain?: string | null; stainOpacity?: number; stainDarkness?: number; rawBeamColor?: string; rawDeckColor?: string; roofOnlyLiftIn?: number; onRootMount?: (g: THREE.Group | null) => void; onGrainPick?: (key: string, label: string) => void; pieceAdjusts?: Record<string, PieceAdjust> }) {
+export function Pavilion({ config, showRoof = true, showTrusses = true, showFrame = true, showRafters = true, grainAdjust, grainPieces, grainFaces, handPeeledRandom = DEFAULT_HAND_PEELED_RANDOM, scrollCapRotation = DEFAULT_SCROLL_CAP_ROTATION, rakeTrimAdjust = DEFAULT_RAKE_TRIM_ADJUST, metalRakeTrimAdjust = DEFAULT_METAL_RAKE_TRIM_ADJUST, backRakeRotate = DEFAULT_BACK_RAKE_ROTATE, backRakeRotation = DEFAULT_BACK_RAKE_ROTATION, shingleScale = 1, shingleContrast = 1.55, shingleBrightness = 0.92, shingleSaturate = 1.05, shingleBumpScale = 1.2, shingleRoughness = 0.95, shingleCapRotation = 0, shingleCapScale = DEFAULT_SHINGLE_CAP_SCALE, shingleCapOffset = DEFAULT_SHINGLE_CAP_OFFSET, shingleCapTextureScale = DEFAULT_SHINGLE_CAP_TEXTURE_SCALE, hammerYOffset = 0, hammerScale = { x: 1, y: 1, z: 1 }, hammerGroupOffset = { x: 0, y: 0, z: 0 }, hammerCorbelScale = { x: 1, y: 1, z: 1 }, hammerCorbelOffset = { x: 0, y: 0, z: 0 }, hammerCorbelRotation = { x: 0, y: 0, z: 0 }, hammerPieceOffsets, hammerPieceScales, hammerUniformProfile55 = false, hammer12Glb = HAMMER12_GLB_DEFAULT_ADJUST, hammer14Glb = HAMMER14_GLB_DEFAULT_ADJUST, hammer16Glb = HAMMER16_GLB_DEFAULT_ADJUST, hammer20Glb = HAMMER20_GLB_DEFAULT_ADJUST, plateOffset = { x: 0, y: 0, z: 0 }, plateRotation = { x: 0, y: 0, z: 0 }, plateSizeScale = 1, webPlateOffset = { x: 0, y: 0, z: 0 }, webPlateRotation = { x: 0, y: 0, z: 0 }, webPlateSizeScale = 1, vPlateSurfaceInset = 0, webPlateSurfaceInset = 0, peakPlateOffset = { x: 0, y: 0, z: 0 }, peakPlateRotation = { x: 0, y: 0, z: 0 }, peakPlateSizeScale = 1, peakPlateSurfaceInset = 0, archPlateOffset = { x: 0, y: 0, z: 0 }, archPlateRotation = { x: 0, y: 0, z: 0 }, archPlateSizeScale = { x: 1, y: 1, z: 1 }, simplePlateOffset = { x: 0, y: 0, z: 0 }, simplePlateRotation = { x: 0, y: 0, z: 0 }, simplePlateSizeScale = { x: 1, y: 1, z: 1 }, topPlateOffset = { x: 0, y: 0, z: 0 }, topPlateRotation = { x: 0, y: 0, z: 0 }, topPlateSizeScale = { x: 1, y: 1, z: 1 }, webPlate2Offset = { x: 0, y: 0, z: 0 }, webPlate2Rotation = { x: 0, y: 0, z: 0 }, webPlate2SizeScale = { x: 1, y: 1, z: 1 }, kingPeakPlateOffset = { x: 0, y: 0, z: 0 }, kingPeakPlateRotation = { x: 0, y: 0, z: 0 }, kingPeakPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlateOffset = { x: 0, y: 0, z: 0 }, kingHeelPlateRotation = { x: 0, y: 0, z: 0 }, kingHeelPlateSizeScale = { x: 1, y: 1, z: 1 }, kingWebPlateOffset = { x: 0, y: 0, z: 0 }, kingWebPlateRotation = { x: 0, y: 0, z: 0 }, kingWebPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlate2Offset = { x: 0, y: 0, z: 0 }, kingHeelPlate2Rotation = { x: 0, y: 0, z: 0 }, kingHeelPlate2SizeScale = { x: 1, y: 1, z: 1 }, trussPlateExtraOffsets, pavilionStain = null, deckStain = null, stainOpacity = 0.9, stainDarkness = 0.3, rawBeamColor = NATURAL_PINE_BEAM, rawDeckColor = NATURAL_PINE_DECK, roofOnlyLiftIn = 0, onRootMount, onGrainPick, pieceAdjusts }: { config: PavilionConfig; showRoof?: boolean; showTrusses?: boolean; showFrame?: boolean; showRafters?: boolean; grainAdjust?: GrainAdjust; grainPieces?: GrainPieceAdjust; grainFaces?: GrainFaceAdjust; handPeeledRandom?: HandPeeledRandom; scrollCapRotation?: ScrollCapRotation; rakeTrimAdjust?: RakeTrimAdjust; metalRakeTrimAdjust?: RakeTrimAdjust; backRakeRotate?: boolean; backRakeRotation?: BackRakeRotation; shingleScale?: number; shingleContrast?: number; shingleBrightness?: number; shingleSaturate?: number; shingleBumpScale?: number; shingleRoughness?: number; shingleCapRotation?: number; shingleCapScale?: ShingleCapScale; shingleCapOffset?: ShingleCapOffset; shingleCapTextureScale?: ShingleCapTextureScale; hammerYOffset?: number; hammerScale?: { x: number; y: number; z: number }; hammerGroupOffset?: { x: number; y: number; z: number }; hammerCorbelScale?: { x: number; y: number; z: number }; hammerCorbelOffset?: { x: number; y: number; z: number }; hammerCorbelRotation?: { x: number; y: number; z: number }; hammerPieceOffsets?: Record<string, { x: number; y: number; z: number }>; hammerPieceScales?: Record<string, { x: number; y: number; z: number }>; hammerUniformProfile55?: boolean; hammer12Glb?: Hammer12GlbAdjust; hammer14Glb?: Hammer14GlbAdjust; hammer16Glb?: Hammer16GlbAdjust; hammer20Glb?: Hammer20GlbAdjust; plateOffset?: { x: number; y: number; z: number }; plateRotation?: { x: number; y: number; z: number }; plateSizeScale?: number; webPlateOffset?: { x: number; y: number; z: number }; webPlateRotation?: { x: number; y: number; z: number }; webPlateSizeScale?: number; vPlateSurfaceInset?: number; webPlateSurfaceInset?: number; peakPlateOffset?: { x: number; y: number; z: number }; peakPlateRotation?: { x: number; y: number; z: number }; peakPlateSizeScale?: number; peakPlateSurfaceInset?: number; archPlateOffset?: { x: number; y: number; z: number }; archPlateRotation?: { x: number; y: number; z: number }; archPlateSizeScale?: { x: number; y: number; z: number }; simplePlateOffset?: { x: number; y: number; z: number }; simplePlateRotation?: { x: number; y: number; z: number }; simplePlateSizeScale?: { x: number; y: number; z: number }; topPlateOffset?: { x: number; y: number; z: number }; topPlateRotation?: { x: number; y: number; z: number }; topPlateSizeScale?: { x: number; y: number; z: number }; webPlate2Offset?: { x: number; y: number; z: number }; webPlate2Rotation?: { x: number; y: number; z: number }; webPlate2SizeScale?: { x: number; y: number; z: number }; kingPeakPlateOffset?: { x: number; y: number; z: number }; kingPeakPlateRotation?: { x: number; y: number; z: number }; kingPeakPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlateOffset?: { x: number; y: number; z: number }; kingHeelPlateRotation?: { x: number; y: number; z: number }; kingHeelPlateSizeScale?: { x: number; y: number; z: number }; kingWebPlateOffset?: { x: number; y: number; z: number }; kingWebPlateRotation?: { x: number; y: number; z: number }; kingWebPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlate2Offset?: { x: number; y: number; z: number }; kingHeelPlate2Rotation?: { x: number; y: number; z: number }; kingHeelPlate2SizeScale?: { x: number; y: number; z: number }; trussPlateExtraOffsets?: TrussPlateExtraOffsets; pavilionStain?: string | null; deckStain?: string | null; stainOpacity?: number; stainDarkness?: number; rawBeamColor?: string; rawDeckColor?: string; roofOnlyLiftIn?: number; onRootMount?: (g: THREE.Group | null) => void; onGrainPick?: (key: string, label: string) => void; pieceAdjusts?: Record<string, PieceAdjust> }) {
   const pavRootRef = useRef<THREE.Group | null>(null);
 
   // Species stays Eastern White Pine; the selected finish changes tooling relief.
@@ -4628,6 +4633,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
    <ShingleSaturateContext.Provider value={shingleSaturate}>
    <ShingleBumpScaleContext.Provider value={shingleBumpScale}>
    <ShingleRoughnessContext.Provider value={shingleRoughness}>
+   <NaturalDeckContext.Provider value={!deckStain}>
    <DeckStainContext.Provider value={deckStain ? "#" + new THREE.Color(deckStain).lerp(new THREE.Color("#ffffff"), 1 - stainOpacity).multiplyScalar(1 - stainDarkness).getHexString() : rawDeckColor}>
 
    <ShingleCapRotationContext.Provider value={shingleCapRotation}>
@@ -5152,6 +5158,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   </ShingleCapScaleContext.Provider>
   </ShingleCapRotationContext.Provider>
    </DeckStainContext.Provider>
+   </NaturalDeckContext.Provider>
    </ShingleRoughnessContext.Provider>
   </ShingleBumpScaleContext.Provider>
   </ShingleSaturateContext.Provider>

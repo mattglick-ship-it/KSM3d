@@ -1,4 +1,5 @@
 "use client";
+import {NATURAL_PINE_BEAM,NATURAL_PINE_DECK,NATURAL_PINE_BEAM_KEY,NATURAL_PINE_DECK_KEY} from '@/lib/natural-pine';
 import {useContext} from 'react';
 import {DefaultsContext} from './published-settings';
 import { PAVILION_BAKED_DEFAULTS } from '@/lib/pavilionBakedDefaults';
@@ -712,8 +713,8 @@ const [metalRakeTrimAdjust, setMetalRakeTrimAdjust] = useBakedValue<RakeTrimAdju
 const [grassDensity, setGrassDensity] = useBakedValue<number>("pav.grassDensity", 1);
 const [grassTint, setGrassTint] = useBakedValue<string>("pav.grassTint", "#c8cfb8");
 const [grassTexture, setGrassTexture] = useBakedValue<number>("pav.grassTexture", 1);
-const rawBeamColor = "#fffaf2"; // Natural Eastern White Pine, without double amber tinting.
-const [rawDeckColor, setRawDeckColor] = useBakedValue<string>("pav.rawDeckColor", "#ffffff");
+const [rawBeamColor] = useBakedValue<string>(NATURAL_PINE_BEAM_KEY, NATURAL_PINE_BEAM);
+const [rawDeckColor, setRawDeckColor] = useBakedValue<string>(NATURAL_PINE_DECK_KEY, NATURAL_PINE_DECK);
 const SCROLL_COLLAR_BAKE: Record<string, PieceAdjust> = {
     "side.collar": { off: { x: 0, y: 0, z: -0.25 }, ext: { xp: 0, xn: 0, yp: 0, yn: 0, zp: 0, zn: 0 }, scl: { x: 1.03, y: 1, z: 0.94 } },
   };

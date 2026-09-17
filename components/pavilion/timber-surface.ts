@@ -32,11 +32,17 @@ export function createTimberHeightData(finish:string, size=512) {
       const groove=0.5-0.5*Math.cos(TAU*lane);
       h=0.32+0.36*Math.pow(groove,0.65)+0.07*Math.sin(TAU*(u*3+v*2))+fibers*0.022+fine*0.025;
       if(finish==='hatchet-hand-peeled') {
-        // Staggered tool impressions, with bevelled edges and no hard UV seams.
-        const row=Math.floor(v*12), along=u*18+hash(row,4)*0.8;
-        const cell=Math.floor(along), q=fract(along), t=fract(v*12);
-        const impression=Math.pow(Math.sin(Math.PI*q),1.4)*Math.pow(Math.sin(Math.PI*t),1.2);
-        h-=impression*(0.18+0.22*hash(cell%18,row));
+        // Short, irregular axe incisions across the grain, as in KSM's
+        // Mifflintown reference: sharp entry lip and a shallow sloping exit.
+        const row=Math.floor(v*10), along=u*13+hash(row,4)*0.8;
+        const cell=Math.floor(along), t=fract(v*10);
+        const seed=hash((cell+13)%13,row);
+        const q=fract(along)-0.24-(t-0.5)*(seed-0.5)*0.4;
+        const length=0.28+hash((cell+13)%13,row+31)*0.42;
+        const ends=Math.max(0,1-Math.pow((t-0.5)/length,4));
+        const cut=q>0&&q<0.38 ? Math.pow(1-q/0.38,1.5) : 0;
+        h-=cut*ends*(0.22+0.25*seed);
+
       }
     }
     const i=(y*size+x)*4, value=Math.round(THREE.MathUtils.clamp(h,0,1)*255);

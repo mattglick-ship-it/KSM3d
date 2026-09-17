@@ -1,55 +1,91 @@
-// Static orthographic 3D style diagrams. No extra WebGL contexts in the menu.
+// Render engineering previews directly from the application's truss functions
+// and authored GLBs/STLs. This is a static triangle projection, not an extra
+// WebGL context. Re-run after modifying model geometry or baked adjustments.
 import * as THREE from 'three';
+import ts from 'typescript';
+import {STLLoader} from 'three/examples/jsm/loaders/STLLoader.js';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createRequire} from 'node:module';
 const sharp=createRequire(import.meta.url)('sharp');
-import {mkdir, writeFile} from 'node:fs/promises';
-const camera=new THREE.OrthographicCamera(-3.75,3.75,2.65,-2.65,0.1,50);
-camera.position.set(4,3.4,13);camera.lookAt(0,1.6,0);camera.updateMatrixWorld();
-const light=new THREE.Vector3(-0.4,0.85,1).normalize();
-const faces=[];
-function addGeometry(geometry,position=new THREE.Vector3(),rotation=0){
- const mesh=new THREE.Mesh(geometry);mesh.position.copy(position);mesh.rotation.z=rotation;mesh.updateMatrixWorld();
- const g=geometry.index?geometry.toNonIndexed():geometry;const p=g.attributes.position;
- for(let i=0;i<p.count;i+=3){
-  const v=[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(p,i+j).applyMatrix4(mesh.matrixWorld));
-  const n=v[1].clone().sub(v[0]).cross(v[2].clone().sub(v[0])).normalize();
-  if(n.dot(camera.position.clone().sub(v[0]))<=0)continue;
-  const shade=0.62+Math.max(0,n.dot(light))*0.38;
-  const color=[224,191,141].map(c=>Math.round(c*shade));
-  const depth=v.reduce((sum,q)=>sum+q.clone().applyMatrix4(camera.matrixWorldInverse).z,0)/3;
-  const points=v.map(q=>q.clone().project(camera)).map(q=>`${((q.x+1)*240).toFixed(2)},${((1-q.y)*170).toFixed(2)}`).join(' ');
-  faces.push({depth,svg:`<polygon points="${points}" fill="rgb(${color})" stroke="rgb(${color})" stroke-width="0.5"/>`});
+const source=readFileSync('components/pavilion/Pavilion3D.tsx','utf8');
+const ast=ts.createSourceFile('model.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+const wanted=['KingTruss','ArchTruss','PlumbRafter','SnowGuards','SeamRidges'];
+const functions=ast.statements.filter(s=>ts.isFunctionDeclaration(s)&&wanted.includes(s.name?.text)).map(s=>s.getText(ast)).join('\n');
+const jsx=(type,props,...children)=>({type,props:{...props,children}});
+const assets={};
+for(const m of source.matchAll(/import (\w+) from "@\/assets\/([^\"]+)"/g))assets[m[1]]=JSON.parse(readFileSync('assets/'+m[2]));
+const loadStl=(url,enabled=true)=>{if(!enabled)return null;const b=readFileSync('public'+url);const geom=new STLLoader().parse(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength));geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();return{geom,axis:0}};
+const env={THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadStl,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
+const compiled=ts.transpileModule(functions,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;
+const model=new Function(...Object.keys(env),compiled+';return {KingTruss,ArchTruss,PlumbRafter,SnowGuards,SeamRidges};')(...Object.values(env));
+function object(node){
+ if(!node||typeof node==='boolean')return null;
+ if(Array.isArray(node)){const g=new THREE.Group();node.flat(Infinity).forEach(n=>{const o=object(n);if(o)g.add(o)});return g}
+ if(typeof node.type==='function')return object(node.type(node.props));
+ const p=node.props??{};
+ if(node.type?.endsWith('Geometry'))return new THREE[node.type[0].toUpperCase()+node.type.slice(1)](...(p.args??[]));
+ if(node.type==='meshStandardMaterial')return new THREE.MeshStandardMaterial({color:p.color??'#deb87c',userData:p.userData??{}});
+ const o=node.type==='mesh'?new THREE.Mesh(p.geometry,new THREE.MeshStandardMaterial({color:'#deb87c'})):new THREE.Group();
+ if(p.position)o.position.set(...p.position);if(p.rotation)o.rotation.set(...p.rotation);if(p.scale)o.scale.set(...p.scale);
+ for(const c of (p.children??[]).flat(Infinity)){const ch=object(c);if(!ch)continue;if(ch.isBufferGeometry)o.geometry=ch;else if(ch.isMaterial)o.material=ch;else o.add(ch)}
+ return o;
+}
+// Reuse the real PieceAdjuster implementation so mesh-centred scales/offsets
+// and hidden pieces agree with the main view.
+const paSource=readFileSync('components/pavilion/PieceAdjuster.tsx','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
+let applyFrame;
+const pa=new Function('THREE','useFrame',ts.transpileModule(paSource,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return PieceAdjuster;')(THREE,fn=>{applyFrame=fn});
+const defaultsSource=readFileSync('lib/pavilionBakedDefaults.ts','utf8');
+const baked=new Function(ts.transpileModule(defaultsSource.replace(/export /g,''),{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return PAVILION_BAKED_DEFAULTS;')();
+const ref=readFileSync('components/pavilion/reference-scene.tsx','utf8');
+const archDefaults=ref.slice(ref.indexOf('const EXT0 ='),ref.indexOf('const ARCH_PIECE_ADJUSTS_DEFAULT'));
+const arches=new Function(ts.transpileModule(archDefaults,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return ARCH_PIECE_ADJUSTS_BAKED;')();
+async function render(root,path,roof=false){
+ root.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+ const aspect=roof?2:1.6,w=1280,h=w/aspect;
+ const camera=new THREE.OrthographicCamera(-1,1,1,-1,.01,100);
+ camera.position.copy(center).add(new THREE.Vector3(roof?3:.55,roof?3:.35,4).normalize().multiplyScalar(20));camera.lookAt(center);camera.updateMatrixWorld();
+ const corners=[];for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z])corners.push(new THREE.Vector3(x,y,z).applyMatrix4(camera.matrixWorldInverse));
+ const cb=new THREE.Box3().setFromPoints(corners),cs=cb.getSize(new THREE.Vector3());const halfH=Math.max(cs.y,cs.x/aspect)*.59;
+ camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
+ const pixels=Buffer.alloc(w*h*3),zbuffer=new Float64Array(w*h).fill(-Infinity);
+ for(let i=0;i<w*h;i++){pixels[i*3]=242;pixels[i*3+1]=241;pixels[i*3+2]=237}
+ let count=0;
+ const faces=[],light=new THREE.Vector3(-.5,.9,1).normalize();
+ root.traverse(mesh=>{if(!mesh.isMesh||!mesh.visible)return;const geo=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry,p=geo.attributes.position;
+ const base=(Array.isArray(mesh.material)?mesh.material[0]:mesh.material).color.clone().convertLinearToSRGB();
+ for(let i=0;i<p.count;i+=3){const vertices=[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(p,i+j).applyMatrix4(mesh.matrixWorld));const n=vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0])).normalize();if(n.dot(camera.position.clone().sub(vertices[0]))<=0)continue;
+ const shade=.5+Math.max(0,n.dot(light))*.5;const rgb=[base.r,base.g,base.b].map(v=>Math.round(v*255*shade));
+ const pv=vertices.map(v=>v.clone().project(camera)).map(v=>({x:(v.x+1)*w/2,y:(1-v.y)*h/2,z:-v.z}));
+ const [a,b,c]=pv,den=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);if(Math.abs(den)<1e-10)continue;
+ const xmin=Math.max(0,Math.floor(Math.min(a.x,b.x,c.x))),xmax=Math.min(w-1,Math.ceil(Math.max(a.x,b.x,c.x)));
+ const ymin=Math.max(0,Math.floor(Math.min(a.y,b.y,c.y))),ymax=Math.min(h-1,Math.ceil(Math.max(a.y,b.y,c.y)));
+ for(let y=ymin;y<=ymax;y++)for(let x=xmin;x<=xmax;x++){
+  const u=((b.y-c.y)*(x+.5-c.x)+(c.x-b.x)*(y+.5-c.y))/den,v=((c.y-a.y)*(x+.5-c.x)+(a.x-c.x)*(y+.5-c.y))/den,t=1-u-v;
+  if(u<0||v<0||t<0)continue;const z=u*a.z+v*b.z+t*c.z,index=y*w+x;if(z<=zbuffer[index])continue;
+  zbuffer[index]=z;for(let k=0;k<3;k++)pixels[index*3+k]=rgb[k];
+ }count++;
  }
+ });
+ await sharp(pixels,{raw:{width:w,height:h,channels:3}}).resize(640).png().toFile(path);console.log(path,count,'faces');
 }
-function beam(x1,y1,x2,y2,t=0.19,z=0){
- addGeometry(new THREE.BoxGeometry(Math.hypot(x2-x1,y2-y1),t,0.25),new THREE.Vector3((x1+x2)/2,(y1+y2)/2,z),Math.atan2(y2-y1,x2-x1));
-}
-function arch(x1,y1,cx,cy,x2,y2,t=0.19){
- const shape=new THREE.Shape();shape.moveTo(x1,y1);shape.quadraticCurveTo(cx,cy,x2,y2);
- shape.lineTo(x2,y2+t);shape.quadraticCurveTo(cx,cy+t,x1,y1+t);shape.closePath();
- const g=new THREE.ExtrudeGeometry(shape,{depth:0.25,bevelEnabled:true,bevelSize:0.008,bevelThickness:0.008,bevelSegments:1,steps:1,curveSegments:24});
- g.translate(0,0,-0.125);addGeometry(g);
-}
-await mkdir('public/truss-icons',{recursive:true});
-for(const style of ['king','arch','hammer']){
- faces.length=0;
- beam(-2.8,1,0,3.15,0.22);beam(0,3.15,2.8,1,0.22);
- beam(-2.5,0.15,-2.5,1.2,0.22);beam(2.5,0.15,2.5,1.2,0.22);
- if(style==='king'){
-  beam(-2.6,1.07,2.6,1.07,0.23);beam(0,1.1,0,3.04,0.23);
-  beam(0,1.2,-1.35,2.05,0.17);beam(0,1.2,1.35,2.05,0.17);
- }else if(style==='arch'){
-  arch(-2.5,0.88,0,2.4,2.5,0.88,0.23);
-  beam(0,1.74,0,3.04,0.22);
-  beam(-1.45,1.47,-1.05,2.26,0.16);beam(1.45,1.47,1.05,2.26,0.16);
- }else{
-  beam(-2.75,1.03,-1.28,1.03,0.22);beam(1.28,1.03,2.75,1.03,0.22);
-  beam(-1.35,0.94,-1.35,2.1,0.2);beam(1.35,0.94,1.35,2.1,0.2);
-  beam(-1.45,2.06,1.45,2.06,0.18);beam(0,1.96,0,3.05,0.2);
-  arch(-1.35,1.12,-1.12,1.85,-0.25,1.98,0.17);arch(0.25,1.98,1.12,1.85,1.35,1.12,0.17);
-  beam(-2.48,0.45,-1.86,0.96,0.16);beam(2.48,0.45,1.86,0.96,0.16);
+mkdirSync('public/truss-icons',{recursive:true});
+for(const width of [12,14,16,20])for(const style of ['king','arch','hammer']){
+ const span=width*.3048-.3,rise=span/3;let root;
+ if(style==='hammer'){
+  const buffer=readFileSync(`public/models/hammer${width}_truss.glb`);
+  const loader=new GLTFLoader();loader.register(()=>({name:'NO_TEXTURES',loadTexture:()=>Promise.resolve(null)}));
+  const gltf=await loader.parseAsync(buffer.buffer.slice(buffer.byteOffset,buffer.byteOffset+buffer.byteLength),'');root=gltf.scene;
+  root.traverse(m=>{if(m.isMesh)m.material=new THREE.MeshStandardMaterial({color:'#deb87c'})});
+ }else{root=object(model[style==='king'?'KingTruss':'ArchTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,plates:false}));
+  const adjusts=style==='arch'?(JSON.parse(baked['pav.archPieceAdjustsByWidth.v14-runtime-large-widths']??'null')??arches)[width]:(JSON.parse(baked['pav.pieceAdjustsByWidth.v24-hammer14scrollmatcharch']??'{}')[`king-${width}`]??{});
+  pa({rootRef:{current:root},adjusts,cacheKey:width});applyFrame();
  }
- faces.sort((a,b)=>a.depth-b.depth);
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="480" height="340" viewBox="0 0 480 340"><defs><filter id="shadow" x="-50%" width="200%"><feGaussianBlur stdDeviation="9"/></filter></defs><ellipse cx="240" cy="270" rx="153" ry="12" fill="#19332c" opacity=".16" filter="url(#shadow)"/>${faces.map(f=>f.svg).join('')}</svg>`;
- await sharp(Buffer.from(svg)).png().toFile(`public/truss-icons/${style}.png`);
+ await render(root,`public/truss-icons/${style}-${width}.png`);
 }
+const roof=new THREE.Group();const slab=new THREE.Mesh(new THREE.BoxGeometry(1.4,.05,1.5),new THREE.MeshStandardMaterial({color:'#64716d'}));roof.add(slab);
+roof.add(object(model.SeamRidges({slopeLen:1.4,panelDepth:1.5,color:'#64716d'})));
+roof.add(object(model.SnowGuards({slopeLen:1.4,panelDepth:1.5,color:'#64716d'})));
+mkdirSync('public/roof-details',{recursive:true});await render(roof,'public/roof-details/snow-guards.png',true);

@@ -37,3 +37,16 @@ Created for Matt Glick, September 16, 2026.
 - Pricing uploads accept `.xlsx` with cached values; legacy `.xls` is not supported. The XLSX reader does not execute macros or formulas.
 - PDF sample rendered and inspected with embedded licensed DejaVu fonts; long notes continue onto additional pages.
 - Existing shared Supabase Auth settings and TSI application were left unchanged.
+
+## Unstained Little Buffalo reference
+
+The unfinished option uses the warmer honey-gold appearance in KSM's Little Buffalo State Park pavilion photos: https://ksmloghomes.com/timber-frame-pavilions/ . Reference images: Little Buffalo Pavilion-10.jpg (exterior) and Little Buffalo Pavilion-08.jpg (interior). These are visual references rather than color-calibrated measurements. Beam tint multiplies the existing pine grain photograph; unstained ceiling boards use the bundled knotty pine plank photograph with corrected grain orientation. Existing stain calculations and tooling relief remain unchanged. Versioned natural-color settings keep the customer and admin defaults consistent without reusing the older amber/white calibration.
+
+## September 17 reference finishes, trusses and snow retention
+
+- User's smooth and hatchet/hand-peeled build screenshots guide surface treatment independently of stain. Hatchet relief now uses short, angular cross-grain incisions over broad drawknife facets. Smooth remains planed with fine pine grain.
+- Four AI-generated 3D sample illustrations are in `public/finish-samples/`; these illustrate the finish options rather than documenting manufactured samples. Same horizontal honey-gold Eastern White Pine block, visible endgrain, neutral studio light; finish-specific prompts specify planed faces, fine rough-sawn striations, broad drawknife facets, or short angular hatchet incisions. Generated with built-in imagegen from the supplied finish photos and Little Buffalo color references, September 17, 2026.
+- Truss diagrams now render the actual King/Arch geometry functions and per-width authored Hammer GLBs, at 12/14/16/20 feet. Arch diagrams apply the bundled per-piece transformations. They are technical previews of the bundled geometry; later published admin geometry overrides require regenerating previews. `scripts/render-truss-icons.mjs` also renders the snow-guard detail from the same roof components with a software depth buffer.
+- Snow guards remain visible on both roof slopes, seated at the panel surface; seam slots clear the modeled seam cap. Guards and rail are mutually exclusive when selected in the customer UI. Enabling either reveals the roof.
+- Added nullable by-size package pricing for guards and rail to Pricing Admin and the shared quote engine. Prices cover both slopes. Known rates flow into estimates, quote line items and PDFs; absent rates remain explicitly pending. Neither the supplied screenshot nor the original Lovable catalog supplies a charge, so no rate was invented or written to the live catalog.
+- `scripts/check-snow-pricing.cjs` verifies exact price deltas, pending/invalid rates, zero-cost entries, deselection and shingle exclusion without contacting customer or payment services.
