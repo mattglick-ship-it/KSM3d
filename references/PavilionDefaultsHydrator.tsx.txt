@@ -1,0 +1,109 @@
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getPavilionDefaults } from "@/lib/pavilion-defaults.functions";
+import { PAVILION_BAKED_DEFAULTS } from "@/lib/pavilionBakedDefaults";
+
+const CUSTOMER_CONFIG_KEYS = [
+  "pav.config",
+  "pav.config.v3-baked-16x20king-noplates",
+];
+
+const CUSTOMER_DEFAULT_CONFIG = {
+  width: 16,
+  length: 20,
+  height: 8,
+  roof: "gable",
+  post: "brace",
+  truss: "king",
+  woodId: "smooth",
+  roofId: "ss-slate-gray",
+  trussPlates: false,
+  braceScale: 0.75,
+  snowGuards: false,
+  snowRail: false,
+  rafterTail: "standard",
+  gableFascia: false,
+  gableOverhang: true,
+  hideBackTruss: false,
+};
+
+function hardenCustomerConfigDefaults() {
+  if (typeof window === "undefined") return;
+
+  for (const key of CUSTOMER_CONFIG_KEYS) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      const cfg = raw ? JSON.parse(raw) : { ...CUSTOMER_DEFAULT_CONFIG };
+      const adminOnly = cfg && (cfg.width === 24 || cfg.width === 28 || cfg.width === 32);
+      if (!raw || adminOnly) {
+        window.localStorage.setItem(
+          key,
+          JSON.stringify({
+            ...CUSTOMER_DEFAULT_CONFIG,
+            ...cfg,
+            width: 16,
+            length: 20,
+            truss: "king",
+            trussPlates: false,
+          }),
+        );
+      }
+    } catch {
+      window.localStorage.setItem(key, JSON.stringify(CUSTOMER_DEFAULT_CONFIG));
+    }
+  }
+}
+
+/** Customer-side hydrator. Seeds localStorage from the in-code baked
+ *  snapshot first (so defaults survive even with no DB row), then fills
+ *  any still-missing keys from the published server snapshot. Both passes
+ *  are fill-only — a visitor who already interacted keeps their session.
+ *  Children only render after hydration completes so the scene never
+ *  paints with stale defaults. */
+export function PavilionDefaultsHydrator({ children }: { children: React.ReactNode }) {
+  const fetchDefaults = useServerFn(getPavilionDefaults);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (typeof window !== "undefined") {
+      for (const [k, v] of Object.entries(PAVILION_BAKED_DEFAULTS)) {
+        if (!k.startsWith("pav.")) continue;
+        if (window.localStorage.getItem(k) == null) {
+          window.localStorage.setItem(k, v);
+        }
+      }
+      hardenCustomerConfigDefaults();
+    }
+
+
+    (async () => {
+      try {
+        const result = await fetchDefaults();
+        if (cancelled) return;
+        const snap = result?.data;
+        if (snap && typeof window !== "undefined") {
+          for (const [k, v] of Object.entries(snap)) {
+            if (!k.startsWith("pav.")) continue;
+            if (window.localStorage.getItem(k) == null) {
+              window.localStorage.setItem(k, v);
+            }
+          }
+          hardenCustomerConfigDefaults();
+        }
+      } catch (err) {
+        console.error("PavilionDefaultsHydrator failed", err);
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchDefaults]);
+
+  if (!ready) return null;
+  return <>{children}</>;
+}
+

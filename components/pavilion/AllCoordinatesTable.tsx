@@ -1,0 +1,484 @@
+"use client";
+import { useMemo, useState } from "react";
+import {
+  HAMMER12_BAKED_PIECE_ADJUSTS,
+  HAMMER12_BAKED_PIECE_OFFSETS_IN,
+  HAMMER12_BAKED_PIECE_SCALES,
+  HAMMER12_BAKED_PLATE_OFFSETS_IN,
+  HAMMER12_BAKED_SCALE,
+} from "./hammer12Baked";
+import {
+  HAMMER14_BAKED_PIECE_ADJUSTS,
+  HAMMER14_BAKED_PIECE_OFFSETS_IN,
+  HAMMER14_BAKED_PIECE_SCALES,
+  HAMMER14_BAKED_PLATE_OFFSETS_IN,
+  HAMMER14_BAKED_SCALE,
+} from "./hammer14Baked";
+import {
+  HAMMER16_BAKED_PIECE_ADJUSTS,
+  HAMMER16_BAKED_PIECE_OFFSETS_IN,
+  HAMMER16_BAKED_PIECE_SCALES,
+  HAMMER16_BAKED_PLATE_OFFSETS_IN,
+  HAMMER16_BAKED_SCALE,
+} from "./hammer16Baked";
+import {
+  HAMMER20_BAKED_PIECE_ADJUSTS_FULL,
+  HAMMER20_BAKED_PIECE_OFFSETS_IN,
+  HAMMER20_BAKED_PIECE_SCALES,
+  HAMMER20_BAKED_PLATE_OFFSETS_IN,
+  HAMMER20_BAKED_SCALE_V,
+  HAMMER20_BAKED_GROUP_OFFSET_IN,
+} from "./hammer20BakedFull";
+
+type XYZ = { x: number; y: number; z: number };
+const WIDTHS = ["12", "14", "16", "20", "24", "28", "32"] as const;
+type W = (typeof WIDTHS)[number];
+const fmt = (n: number | undefined) =>
+  typeof n === "number" && Number.isFinite(n) ? Number(n.toFixed(3)).toString() : "—";
+const xyz = (v: XYZ | undefined) =>
+  v ? `${fmt(v.x)} / ${fmt(v.y)} / ${fmt(v.z)}` : "—";
+
+function readLS<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+type ByWidth<T> = Partial<Record<W, T>>;
+const ZERO: XYZ = { x: 0, y: 0, z: 0 };
+const ONE: XYZ = { x: 1, y: 1, z: 1 };
+
+const PLATE_GROUPS: Array<{
+  label: string;
+  rows: Array<{ label: string; offKey: string; rotKey: string; sclKey: string; offDef: XYZ; rotDef: XYZ; sclDef: XYZ }>;
+}> = [
+  {
+    label: "Arch-style decorative plates (per width)",
+    rows: [
+      {
+        label: "Arch plate",
+        offKey: "pav.archPlateOffsetIn.byWidth.v1",
+        rotKey: "pav.archPlateRotationDeg.byWidth.v1",
+        sclKey: "pav.archPlateSizeScale.byWidth.v1",
+        offDef: { x: 48, y: -123, z: 0 }, rotDef: { x: 0, y: 0, z: 1 }, sclDef: { x: 0.95, y: 0.95, z: 1 },
+      },
+      {
+        label: "Simple plate",
+        offKey: "pav.simplePlateOffsetIn.byWidth.v1",
+        rotKey: "pav.simplePlateRotationDeg.byWidth.v1",
+        sclKey: "pav.simplePlateSizeScale.byWidth.v1",
+        offDef: { x: 10.5, y: -115, z: 0 }, rotDef: { x: 0, y: 0, z: 2 }, sclDef: { x: 0.97, y: 1.05, z: 1 },
+      },
+      {
+        label: "Top plate",
+        offKey: "pav.topPlateOffsetIn.byWidth.v1",
+        rotKey: "pav.topPlateRotationDeg.byWidth.v1",
+        sclKey: "pav.topPlateSizeScale.byWidth.v1",
+        offDef: { x: 77.5, y: -108.25, z: 0 }, rotDef: { x: 0, y: 0, z: 0 }, sclDef: { x: 1.05, y: 1.05, z: 1 },
+      },
+      {
+        label: "Web plate 2",
+        offKey: "pav.webPlate2OffsetIn.byWidth.v1",
+        rotKey: "pav.webPlate2RotationDeg.byWidth.v1",
+        sclKey: "pav.webPlate2SizeScale.byWidth.v1",
+        offDef: { x: 42.5, y: -132.75, z: 0 }, rotDef: { x: 0, y: 0, z: 0 }, sclDef: { x: 1.06, y: 1.06, z: 1 },
+      },
+    ],
+  },
+  {
+    label: "King-style truss plates (per width)",
+    rows: [
+      {
+        label: "King peak plate",
+        offKey: "pav.kingPeakPlateOffsetIn.byWidth.v2",
+        rotKey: "pav.kingPeakPlateRotationDeg.byWidth.v2",
+        sclKey: "pav.kingPeakPlateSizeScale.byWidth.v1",
+        offDef: { x: 73.75, y: -143.5, z: 0 }, rotDef: { x: 0, y: 0, z: 0 }, sclDef: { x: 1, y: 1, z: 1 },
+      },
+      {
+        label: "King heel plate",
+        offKey: "pav.kingHeelPlateOffsetIn.byWidth.v2",
+        rotKey: "pav.kingHeelPlateRotationDeg.byWidth.v2",
+        sclKey: "pav.kingHeelPlateSizeScale.byWidth.v1",
+        offDef: { x: -48.75, y: -117, z: 0 }, rotDef: { x: 0, y: 0, z: 0 }, sclDef: { x: 1, y: 1, z: 1 },
+      },
+      {
+        label: "King heel plate 2",
+        offKey: "pav.kingHeelPlate2OffsetIn.byWidth.v2",
+        rotKey: "pav.kingHeelPlate2RotationDeg.byWidth.v2",
+        sclKey: "pav.kingHeelPlate2SizeScale.byWidth.v1",
+        offDef: { x: -116.5, y: -98.5, z: 0 }, rotDef: { x: 0, y: 0, z: -5 }, sclDef: { x: 1.07, y: 1.07, z: 1 },
+      },
+      {
+        label: "King web plate",
+        offKey: "pav.kingWebPlateOffsetIn.byWidth.v2",
+        rotKey: "pav.kingWebPlateRotationDeg.byWidth.v2",
+        sclKey: "pav.kingWebPlateSizeScale.byWidth.v1",
+        offDef: { x: -29, y: -173.75, z: 0 }, rotDef: { x: 0, y: 0, z: 0 }, sclDef: { x: 1.1, y: 1.21, z: 1 },
+      },
+    ],
+  },
+];
+
+const HAMMER_PLATE_KEYS: Partial<Record<W, string>> = {
+  "12": "pav.plate12OffsetsIn.v3-baked",
+  "14": "pav.plate14OffsetsIn.v3-baked",
+  "16": "pav.plate16OffsetsIn.v2-baked",
+  "20": "pav.plate20OffsetsIn.v5-baked",
+};
+
+const HAMMER_BAKED: Partial<Record<W, {
+  pieceOffsets: Record<string, XYZ>;
+  pieceScales: Record<string, XYZ>;
+  plateOffsets: Record<string, XYZ>;
+  trussScale: XYZ;
+  adjusts: Record<string, unknown>;
+  groupOffset?: XYZ;
+}>> = {
+  "12": {
+    pieceOffsets: HAMMER12_BAKED_PIECE_OFFSETS_IN,
+    pieceScales: HAMMER12_BAKED_PIECE_SCALES,
+    plateOffsets: HAMMER12_BAKED_PLATE_OFFSETS_IN,
+    trussScale: HAMMER12_BAKED_SCALE,
+    adjusts: HAMMER12_BAKED_PIECE_ADJUSTS as Record<string, unknown>,
+  },
+  "14": {
+    pieceOffsets: HAMMER14_BAKED_PIECE_OFFSETS_IN,
+    pieceScales: HAMMER14_BAKED_PIECE_SCALES,
+    plateOffsets: HAMMER14_BAKED_PLATE_OFFSETS_IN,
+    trussScale: HAMMER14_BAKED_SCALE,
+    adjusts: HAMMER14_BAKED_PIECE_ADJUSTS as Record<string, unknown>,
+  },
+  "16": {
+    pieceOffsets: HAMMER16_BAKED_PIECE_OFFSETS_IN,
+    pieceScales: HAMMER16_BAKED_PIECE_SCALES,
+    plateOffsets: HAMMER16_BAKED_PLATE_OFFSETS_IN,
+    trussScale: HAMMER16_BAKED_SCALE,
+    adjusts: HAMMER16_BAKED_PIECE_ADJUSTS as Record<string, unknown>,
+  },
+  "20": {
+    pieceOffsets: HAMMER20_BAKED_PIECE_OFFSETS_IN,
+    pieceScales: HAMMER20_BAKED_PIECE_SCALES,
+    plateOffsets: HAMMER20_BAKED_PLATE_OFFSETS_IN,
+    trussScale: HAMMER20_BAKED_SCALE_V,
+    adjusts: HAMMER20_BAKED_PIECE_ADJUSTS_FULL as Record<string, unknown>,
+  },
+};
+HAMMER_BAKED["20"]!.groupOffset = HAMMER20_BAKED_GROUP_OFFSET_IN;
+
+// Arch-truss piece adjusts — per-width, persisted under a single key.
+type ArchAdjust = { off?: XYZ; scl?: XYZ; hidden?: boolean };
+const ARCH_PIECES_KEY = "pav.archPieceAdjustsByWidth.v2-baked";
+const ARCH_PIECE_ADJUSTS_BAKED: Record<string, Record<string, ArchAdjust>> = {
+  "12": {
+    "arch.kingpin": { off: { x: -2,     y: 8,      z: -2.75 }, scl: { x: 1.32, y: 1.18, z: 0.89 } },
+    "arch.strut.l": { off: { x: 6.406,  y: 19.5,   z: -2.75 }, scl: { x: 1.47, y: 1.47, z: 0.96 } },
+    "arch.strut.r": { off: { x: -6.5,   y: 19.529, z: -2.75 }, scl: { x: 1.47, y: 1.47, z: 0.96 } },
+    "arch.wing.l":  { off: { x: -8.631, y: 31.25,  z: -2.75 }, scl: { x: 1.35, y: 1.62, z: 0.97 } },
+    "arch.wing.r":  { off: { x: 7.75,   y: 31.25,  z: -2.75 }, scl: { x: 1.35, y: 1.62, z: 0.97 } },
+  },
+  "14": {
+    "arch.kingpin": { off: { x: -2,     y: 12.5,   z: -3    }, scl: { x: 1.24, y: 1.37, z: 0.98 } },
+    "arch.strut.l": { off: { x: 4.896,  y: 22.226, z: -2.75 }, scl: { x: 1.52, y: 1.52, z: 0.95 } },
+    "arch.strut.r": { off: { x: -5,     y: 22.258, z: -2.75 }, scl: { x: 1.52, y: 1.52, z: 0.95 } },
+    "arch.wing.l":  { off: { x: -13.25, y: 32.5,   z: -2.75 }, scl: { x: 1.44, y: 1.44, z: 0.99 } },
+    "arch.wing.r":  { off: { x: 11.25,  y: 32.75,  z: -2.75 }, scl: { x: 1.44, y: 1.44, z: 0.99 } },
+  },
+  "16": {
+    "arch.corbel.l": { off: { x: 0,      y: 0,      z: 0     }, scl: { x: 1,    y: 1,    z: 1    }, hidden: true },
+    "arch.kingpin":  { off: { x: -2,     y: 15.75,  z: -2.75 }, scl: { x: 1.27, y: 1.4,  z: 0.92 } },
+    "arch.strut.l":  { off: { x: 1.5,    y: 27.955, z: -2.75 }, scl: { x: 1.73, y: 1.73, z: 0.9  } },
+    "arch.strut.r":  { off: { x: -1.646, y: 28,     z: -2.75 }, scl: { x: 1.73, y: 1.73, z: 0.9  } },
+    "arch.wing.l":   { off: { x: -17.25, y: 35.25,  z: -2.75 }, scl: { x: 1.48, y: 1.48, z: 0.93 } },
+    "arch.wing.r":   { off: { x: 15.25,  y: 35.25,  z: -2.75 }, scl: { x: 1.48, y: 1.48, z: 0.93 } },
+  },
+  "20": {
+    "arch.kingpin": { off: { x: -2,     y: 25.25, z: -2.75 }, scl: { x: 1.32, y: 1.73, z: 0.89 } },
+    "arch.strut.l": { off: { x: -2.75,  y: 37,    z: -2.75 }, scl: { x: 1.68, y: 1.68, z: 0.96 } },
+    "arch.strut.r": { off: { x: 2.75,   y: 37,    z: -2.75 }, scl: { x: 1.68, y: 1.68, z: 0.96 } },
+    "arch.wing.l":  { off: { x: -24.75, y: 39.5,  z: -2.75 }, scl: { x: 1.9,  y: 1.9,  z: 0.98 } },
+    "arch.wing.r":  { off: { x: 24.75,  y: 39.5,  z: -2.75 }, scl: { x: 1.9,  y: 1.9,  z: 0.98 } },
+  },
+};
+
+
+export function AllCoordinatesTable() {
+  const [open, setOpen] = useState(false);
+
+  const data = useMemo(() => {
+    if (!open) return null;
+    // Read every per-width plate map from localStorage.
+    const plateRows = PLATE_GROUPS.map((g) => ({
+      label: g.label,
+      rows: g.rows.map((r) => {
+        const offMap = readLS<ByWidth<XYZ>>(r.offKey, {});
+        const rotMap = readLS<ByWidth<XYZ>>(r.rotKey, {});
+        const sclMap = readLS<ByWidth<XYZ | number>>(r.sclKey, {});
+        return {
+          label: r.label,
+          byWidth: Object.fromEntries(
+            WIDTHS.map((w) => {
+              const off = offMap[w] ?? r.offDef;
+              const rot = rotMap[w] ?? r.rotDef;
+              const sclRaw = sclMap[w] ?? r.sclDef;
+              const scl: XYZ = typeof sclRaw === "number"
+                ? { x: sclRaw, y: sclRaw, z: sclRaw }
+                : sclRaw;
+              return [w, { off, rot, scl }];
+            }),
+          ) as Record<W, { off: XYZ; rot: XYZ; scl: XYZ }>,
+        };
+      }),
+    }));
+
+    // V/W/Peak hammer truss plate offsets per width.
+    const hammerPlateOffsets = Object.fromEntries(
+      WIDTHS.map((w) => {
+        const baked = HAMMER_BAKED[w];
+        if (!baked) return [w, {}];
+        const v = readLS<Record<string, XYZ>>(HAMMER_PLATE_KEYS[w] ?? "", baked.plateOffsets);
+        return [w, { ...baked.plateOffsets, ...v }];
+      }),
+    ) as Record<W, Record<string, XYZ>>;
+
+    // Arch-truss piece adjusts per width — fall back to defaults if missing.
+    const archByWidth = readLS<Record<string, Record<string, ArchAdjust>>>(ARCH_PIECES_KEY, {});
+    const archPieces = Object.fromEntries(
+      WIDTHS.map((w) => [w, { ...(ARCH_PIECE_ADJUSTS_BAKED[w] ?? {}), ...(archByWidth[w] ?? {}) }]),
+    ) as Record<W, Record<string, ArchAdjust>>;
+
+    return { plateRows, hammerPlateOffsets, archPieces };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded border border-input bg-white px-2 py-1 text-xs font-semibold text-ink shadow-sm hover:bg-muted"
+        title="Open a single read-only sheet of every truss/plate coordinate across all widths and styles"
+      >
+        📐 Show ALL coordinates (every width & style)
+      </button>
+      {open && data && (
+        <div
+          className="pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="flex max-h-[92vh] w-full max-w-[1400px] flex-col overflow-hidden rounded-lg border border-border bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-2">
+              <div>
+                <div className="text-sm font-semibold">All truss coordinates — every width & style</div>
+                <div className="text-[10px] text-muted-foreground">
+                  Read-only snapshot. Screenshot any section and send back to bake in. Defaults shown when no override exists.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded border border-input bg-background px-2 py-0.5 text-xs hover:bg-muted"
+              >
+                Close ×
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-auto p-4 font-mono text-[10.5px] leading-tight">
+              {data.plateRows.map((group) => (
+                <div key={group.label} className="mb-6">
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label}  — values shown as x / y / z
+                  </div>
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th className="px-2 py-1 text-left">Plate</th>
+                        <th className="px-2 py-1 text-left">Field</th>
+                        {WIDTHS.map((w) => (
+                          <th key={w} className="px-2 py-1 text-left">{w}′</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.rows.map((r) => (
+                        <>
+                          <tr key={r.label + "-off"} className="border-b border-border/50">
+                            <td className="px-2 py-1 font-semibold" rowSpan={3}>{r.label}</td>
+                            <td className="px-2 py-1 text-muted-foreground">offset ″</td>
+                            {WIDTHS.map((w) => (
+                              <td key={w} className="px-2 py-1">{xyz(r.byWidth[w].off)}</td>
+                            ))}
+                          </tr>
+                          <tr key={r.label + "-rot"} className="border-b border-border/50">
+                            <td className="px-2 py-1 text-muted-foreground">rotation °</td>
+                            {WIDTHS.map((w) => (
+                              <td key={w} className="px-2 py-1">{xyz(r.byWidth[w].rot)}</td>
+                            ))}
+                          </tr>
+                          <tr key={r.label + "-scl"} className="border-b border-border">
+                            <td className="px-2 py-1 text-muted-foreground">scale ×</td>
+                            {WIDTHS.map((w) => (
+                              <td key={w} className="px-2 py-1">{xyz(r.byWidth[w].scl)}</td>
+                            ))}
+                          </tr>
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+
+              {/* Hammer-style V/W/Peak plate offsets */}
+              <div className="mb-6">
+                <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Hammer-style truss plates — V/W/Peak offsets ″ (x / y / z)
+                </div>
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      <th className="px-2 py-1 text-left">Plate</th>
+                      {WIDTHS.map((w) => (
+                        <th key={w} className="px-2 py-1 text-left">{w}′</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(["vL", "vR", "wL", "wR", "peak"] as const).map((k) => (
+                      <tr key={k} className="border-b border-border/50">
+                        <td className="px-2 py-1 font-semibold">{k}</td>
+                        {WIDTHS.map((w) => (
+                          <td key={w} className="px-2 py-1">{xyz(data.hammerPlateOffsets[w][k])}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Arch-truss piece adjusts per width */}
+              {(() => {
+                const archPieceIds = Array.from(
+                  new Set<string>(
+                    WIDTHS.flatMap((w) => Object.keys(data.archPieces[w])),
+                  ),
+                ).sort();
+                return (
+                  <div className="mb-8">
+                    <div className="mb-1 flex items-baseline gap-3 border-t border-border pt-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink">
+                        Arch truss piece adjusts (per width)
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        Stored in mesh-local inches; X is mirrored on display for *.r pieces.
+                      </div>
+                    </div>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/40">
+                          <th className="px-2 py-1 text-left">Piece</th>
+                          <th className="px-2 py-1 text-left">Field</th>
+                          {WIDTHS.map((w) => (
+                            <th key={w} className="px-2 py-1 text-left">{w}′</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {archPieceIds.map((p) => (
+                          <>
+                            <tr key={p + "-off"} className="border-b border-border/50">
+                              <td className="px-2 py-1 font-semibold" rowSpan={3}>{p}</td>
+                              <td className="px-2 py-1 text-muted-foreground">offset ″</td>
+                              {WIDTHS.map((w) => (
+                                <td key={w} className="px-2 py-1">{xyz(data.archPieces[w][p]?.off)}</td>
+                              ))}
+                            </tr>
+                            <tr key={p + "-scl"} className="border-b border-border/50">
+                              <td className="px-2 py-1 text-muted-foreground">scale ×</td>
+                              {WIDTHS.map((w) => (
+                                <td key={w} className="px-2 py-1">{xyz(data.archPieces[w][p]?.scl)}</td>
+                              ))}
+                            </tr>
+                            <tr key={p + "-hid"} className="border-b border-border">
+                              <td className="px-2 py-1 text-muted-foreground">hidden</td>
+                              {WIDTHS.map((w) => (
+                                <td key={w} className="px-2 py-1">{data.archPieces[w][p]?.hidden ? "yes" : ""}</td>
+                              ))}
+                            </tr>
+                          </>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+
+              {/* Per-width hammer baked details */}
+              {WIDTHS.map((w) => {
+                const baked = HAMMER_BAKED[w];
+                if (!baked) return null;
+                const pieces = Array.from(
+                  new Set<string>([
+                    ...Object.keys(baked.pieceOffsets),
+                    ...Object.keys(baked.pieceScales),
+                    ...Object.keys(baked.adjusts),
+                  ]),
+                ).sort();
+                return (
+                  <div key={w} className="mb-8">
+                    <div className="mb-1 flex items-baseline gap-3 border-t border-border pt-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink">
+                        {w}′ hammer-beam baked
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        truss scale: {xyz(baked.trussScale)}
+                        {baked.groupOffset ? `  ·  group offset ″: ${xyz(baked.groupOffset)}` : ""}
+                      </div>
+                    </div>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/40">
+                          <th className="px-2 py-1 text-left">Piece</th>
+                          <th className="px-2 py-1 text-left">piece off ″ (x/y/z)</th>
+                          <th className="px-2 py-1 text-left">piece scale × (x/y/z)</th>
+                          <th className="px-2 py-1 text-left">adjust off ″ (x/y/z)</th>
+                          <th className="px-2 py-1 text-left">adjust scale × (x/y/z)</th>
+                          <th className="px-2 py-1 text-left">hidden</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pieces.map((p) => {
+                          const off = baked.pieceOffsets[p] ?? ZERO;
+                          const scl = baked.pieceScales[p] ?? ONE;
+                          const a = baked.adjusts[p] as { off?: XYZ; scl?: XYZ; hidden?: boolean } | undefined;
+                          return (
+                            <tr key={p} className="border-b border-border/50">
+                              <td className="px-2 py-1 font-semibold">{p}</td>
+                              <td className="px-2 py-1">{xyz(off)}</td>
+                              <td className="px-2 py-1">{xyz(scl)}</td>
+                              <td className="px-2 py-1">{a?.off ? xyz(a.off) : "—"}</td>
+                              <td className="px-2 py-1">{a?.scl ? xyz(a.scl) : "—"}</td>
+                              <td className="px-2 py-1">{a?.hidden ? "yes" : ""}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+

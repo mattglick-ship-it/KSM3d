@@ -1,0 +1,219 @@
+import { useMemo } from "react";
+import * as THREE from "three";
+
+/**
+ * Low-poly, GPU-friendly backyard environment for the customer view.
+ * - Instanced trees (trunk + cone canopy) and shrubs (sphere)
+ * - Simple picket fence at the property line
+ * - Deterministic placement (seeded) so the scene is stable across renders
+ * - Every prop is optional; safe to drop into <Scene /> without config.
+ */
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+type PadRect = { width: number; length: number };
+
+function useTreeInstances(count: number, seed: number, pad: PadRect) {
+  return useMemo(() => {
+    const rand = mulberry32(seed);
+    const trunks = new THREE.Object3D();
+    const canopies = new THREE.Object3D();
+    const trunkArr: THREE.Matrix4[] = [];
+    const canopyArr: THREE.Matrix4[] = [];
+    const colors: THREE.Color[] = [];
+    const palette = ["#3f6b3a", "#4d7d3f", "#5a8a48", "#356234", "#6b9052"];
+    const clearW = pad.width / 2 + 2.5;
+    const clearL = pad.length / 2 + 2.5;
+    let attempts = 0;
+    while (trunkArr.length < count && attempts < count * 20) {
+      attempts++;
+      // ring 6..22 m out from center
+      const r = 6 + rand() * 16;
+      const a = rand() * Math.PI * 2;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      if (Math.abs(x) < clearW && Math.abs(z) < clearL) continue;
+      const scale = 0.85 + rand() * 0.9;
+      const trunkH = 1.2 * scale;
+      trunks.position.set(x, trunkH / 2, z);
+      trunks.rotation.set(0, rand() * Math.PI, 0);
+      trunks.scale.set(0.18 * scale, trunkH, 0.18 * scale);
+      trunks.updateMatrix();
+      trunkArr.push(trunks.matrix.clone());
+      const canopyH = 2.4 * scale;
+      canopies.position.set(x, trunkH + canopyH / 2 - 0.1, z);
+      canopies.rotation.set(0, rand() * Math.PI, 0);
+      canopies.scale.set(1.4 * scale, canopyH, 1.4 * scale);
+      canopies.updateMatrix();
+      canopyArr.push(canopies.matrix.clone());
+      colors.push(new THREE.Color(palette[(rand() * palette.length) | 0]));
+    }
+    return { trunkArr, canopyArr, colors };
+  }, [count, seed, pad.width, pad.length]);
+}
+
+function InstancedTrees({ pad }: { pad: PadRect }) {
+  const { trunkArr, canopyArr, colors } = useTreeInstances(22, 1337, pad);
+  const trunkRef = (m: THREE.InstancedMesh | null) => {
+    if (!m) return;
+    trunkArr.forEach((mat, i) => m.setMatrixAt(i, mat));
+    m.instanceMatrix.needsUpdate = true;
+  };
+  const canopyRef = (m: THREE.InstancedMesh | null) => {
+    if (!m) return;
+    canopyArr.forEach((mat, i) => {
+      m.setMatrixAt(i, mat);
+      m.setColorAt(i, colors[i]);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  };
+  const n = trunkArr.length;
+  if (n === 0) return null;
+  return (
+    <group>
+      <instancedMesh ref={trunkRef} args={[undefined, undefined, n]} castShadow receiveShadow>
+        <cylinderGeometry args={[1, 1, 1, 8]} />
+        <meshStandardMaterial color="#4a3423" roughness={1} />
+      </instancedMesh>
+      <instancedMesh ref={canopyRef} args={[undefined, undefined, n]} castShadow>
+        <coneGeometry args={[1, 1, 10]} />
+        <meshStandardMaterial roughness={1} />
+      </instancedMesh>
+    </group>
+  );
+}
+
+function InstancedShrubs({ pad }: { pad: PadRect }) {
+  const data = useMemo(() => {
+    const rand = mulberry32(4242);
+    const arr: THREE.Matrix4[] = [];
+    const colors: THREE.Color[] = [];
+    const palette = ["#5b8a4a", "#6f9a55", "#4c7a3f", "#7ea862"];
+    const dummy = new THREE.Object3D();
+    const clearW = pad.width / 2 + 1.5;
+    const clearL = pad.length / 2 + 1.5;
+    for (let i = 0; i < 36; i++) {
+      const r = 4.5 + Math.random() * 14;
+      const a = rand() * Math.PI * 2;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      if (Math.abs(x) < clearW && Math.abs(z) < clearL) continue;
+      const s = 0.35 + rand() * 0.5;
+      dummy.position.set(x, s * 0.55, z);
+      dummy.rotation.set(0, rand() * Math.PI, 0);
+      dummy.scale.set(s * 1.2, s, s * 1.2);
+      dummy.updateMatrix();
+      arr.push(dummy.matrix.clone());
+      colors.push(new THREE.Color(palette[(rand() * palette.length) | 0]));
+    }
+    return { arr, colors };
+  }, [pad.width, pad.length]);
+  const setRef = (m: THREE.InstancedMesh | null) => {
+    if (!m) return;
+    data.arr.forEach((mat, i) => {
+      m.setMatrixAt(i, mat);
+      m.setColorAt(i, data.colors[i]);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  };
+  const n = data.arr.length;
+  if (n === 0) return null;
+  return (
+    <instancedMesh ref={setRef} args={[undefined, undefined, n]} castShadow receiveShadow>
+      <sphereGeometry args={[1, 10, 8]} />
+      <meshStandardMaterial roughness={1} />
+    </instancedMesh>
+  );
+}
+
+function Fence({ radius = 26 }: { radius?: number }) {
+  // Square fence line, picket-style, at property perimeter.
+  const half = radius;
+  const spacing = 0.18;
+  const picketH = 1.1;
+  const railH = 0.06;
+  const post = new THREE.Object3D();
+  const pickets = useMemo(() => {
+    const arr: THREE.Matrix4[] = [];
+    const sides: Array<[THREE.Vector3, THREE.Vector3]> = [
+      [new THREE.Vector3(-half, 0, -half), new THREE.Vector3(half, 0, -half)],
+      [new THREE.Vector3(half, 0, -half), new THREE.Vector3(half, 0, half)],
+      [new THREE.Vector3(half, 0, half), new THREE.Vector3(-half, 0, half)],
+      [new THREE.Vector3(-half, 0, half), new THREE.Vector3(-half, 0, -half)],
+    ];
+    for (const [a, b] of sides) {
+      const dir = new THREE.Vector3().subVectors(b, a);
+      const len = dir.length();
+      const count = Math.floor(len / spacing);
+      const step = dir.clone().normalize().multiplyScalar(spacing);
+      const rotY = Math.atan2(dir.x, dir.z);
+      for (let i = 0; i <= count; i++) {
+        const p = a.clone().add(step.clone().multiplyScalar(i));
+        post.position.set(p.x, picketH / 2, p.z);
+        post.rotation.set(0, rotY, 0);
+        post.scale.set(0.05, picketH, 0.02);
+        post.updateMatrix();
+        arr.push(post.matrix.clone());
+      }
+    }
+    return arr;
+  }, [half]);
+  const setRef = (m: THREE.InstancedMesh | null) => {
+    if (!m) return;
+    pickets.forEach((mat, i) => m.setMatrixAt(i, mat));
+    m.instanceMatrix.needsUpdate = true;
+  };
+  return (
+    <group>
+      <instancedMesh ref={setRef} args={[undefined, undefined, pickets.length]} castShadow>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#e6dcc8" roughness={0.9} />
+      </instancedMesh>
+      {/* Two horizontal rails per side */}
+      {[-half, half].map((z) => (
+        <group key={`z${z}`}>
+          {[picketH * 0.75, picketH * 0.25].map((y) => (
+            <mesh key={y} position={[0, y, z]} castShadow>
+              <boxGeometry args={[half * 2, railH, 0.03]} />
+              <meshStandardMaterial color="#d8ceb8" roughness={0.9} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {[-half, half].map((x) => (
+        <group key={`x${x}`}>
+          {[picketH * 0.75, picketH * 0.25].map((y) => (
+            <mesh key={y} position={[x, y, 0]} castShadow>
+              <boxGeometry args={[0.03, railH, half * 2]} />
+              <meshStandardMaterial color="#d8ceb8" roughness={0.9} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+    </group>
+  );
+}
+
+export function Backyard({ padWidthM, padLengthM }: { padWidthM: number; padLengthM: number }) {
+  const pad = { width: padWidthM, length: padLengthM };
+  return (
+    <group>
+      <InstancedTrees pad={pad} />
+      <InstancedShrubs pad={pad} />
+      <Fence radius={26} />
+    </group>
+  );
+}
+

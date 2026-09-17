@@ -1,0 +1,170 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Lock, Unlock } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export function RangeSlider({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  unit = "'",
+  onChange,
+  disabled = false,
+  lockable = true,
+  defaultLocked = true,
+  locked: lockedProp,
+  onLockChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  unit?: string;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+  lockable?: boolean;
+  defaultLocked?: boolean;
+  /** Controlled lock state. When provided with onLockChange, overrides internal state. */
+  locked?: boolean;
+  onLockChange?: (locked: boolean) => void;
+}) {
+  const [internalLocked, setInternalLocked] = useState(defaultLocked);
+  const locked = lockedProp ?? internalLocked;
+  const setLocked = (next: boolean) => {
+    if (onLockChange) onLockChange(next);
+    else setInternalLocked(next);
+  };
+  const isDisabled = disabled || locked;
+  const pct = ((value - min) / (max - min)) * 100;
+  return (
+    <div className={cn("space-y-2", disabled && "opacity-50")}>
+      <div className="flex justify-between items-center text-xs gap-2">
+        <label className="text-ink/70 flex items-center gap-1.5">
+          {lockable && (
+            <button
+              type="button"
+              onClick={() => setLocked(!locked)}
+              className={cn(
+                "p-1.5 -m-1 sm:p-0.5 sm:m-0 rounded hover:bg-ui-border/50 transition-colors touch-manipulation",
+                locked ? "text-brand" : "text-ink/40",
+              )}
+              aria-label={locked ? "Unlock slider" : "Lock slider"}
+              title={locked ? "Unlock slider" : "Lock slider"}
+            >
+              {locked ? <Lock className="size-4 sm:size-3" /> : <Unlock className="size-4 sm:size-3" />}
+            </button>
+          )}
+          {label}
+        </label>
+        <ManualNumberInput
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          unit={unit}
+          disabled={isDisabled}
+          onCommit={onChange}
+        />
+      </div>
+      <div className={cn("relative h-10 sm:h-5 flex items-center", locked && "opacity-60")}>
+        <div className="absolute inset-x-0 h-1 bg-ui-border rounded-full" />
+        <div
+          className="absolute h-1 bg-brand rounded-full"
+          style={{ width: `${pct}%` }}
+        />
+        <div
+          className={cn(
+            "absolute size-6 sm:size-3.5 bg-white border-2 border-brand rounded-full shadow-sm -translate-x-1/2 pointer-events-none",
+          )}
+          style={{ left: `${pct}%` }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          disabled={isDisabled}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className={cn(
+            "absolute inset-0 w-full h-full opacity-0 touch-manipulation",
+            isDisabled ? "cursor-not-allowed" : "cursor-pointer",
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ManualNumberInput({
+  value,
+  min,
+  max,
+  step,
+  unit,
+  disabled,
+  onCommit,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  disabled: boolean;
+  onCommit: (v: number) => void;
+}) {
+  const [text, setText] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!focused) setText(String(value));
+  }, [value, focused]);
+  const commit = () => {
+    const parsed = parseFloat(text);
+    if (Number.isFinite(parsed)) {
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onCommit(clamped);
+      setText(String(clamped));
+    } else {
+      setText(String(value));
+    }
+  };
+  return (
+    <div className="flex items-center gap-0.5">
+      <input
+        type="number"
+        inputMode="decimal"
+        value={text}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        onChange={(e) => setText(e.target.value)}
+        onFocus={(e) => {
+          setFocused(true);
+          e.target.select();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          commit();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.currentTarget.blur();
+          } else if (e.key === "Escape") {
+            setText(String(value));
+            e.currentTarget.blur();
+          }
+        }}
+        className={cn(
+          "w-16 text-right font-medium tabular-nums bg-transparent border border-transparent hover:border-ui-border focus:border-brand focus:outline-none rounded px-1 py-0.5 text-xs",
+          disabled && "cursor-not-allowed",
+        )}
+      />
+      <span className="text-xs text-ink/70">{unit}</span>
+    </div>
+  );
+}
+

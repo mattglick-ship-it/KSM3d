@@ -1,0 +1,537 @@
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  ROOF_MATERIALS,
+  ROOF_STYLES,
+  TRUSS_STYLES,
+  WOOD_FINISHES,
+  RAFTER_TAILS,
+  type PavilionConfig,
+} from "@/lib/pavilion-config";
+import { loadPricing } from "@/lib/pricing/store";
+import { computeQuote, selectionFromConfig, fmtUSD } from "@/lib/pricing/engine";
+import { downloadQuotePdf } from "@/lib/pavilion-quote-pdf";
+
+
+const STAIN_OPTIONS = [
+  { name: "Old Lathe", hex: "#7a6a55" },
+  { name: "Barn Brown", hex: "#5a3a25" },
+  { name: "Medium Gray", hex: "#8a8478" },
+  { name: "Sunset", hex: "#b87045" },
+  { name: "White", hex: "#e8e0d2" },
+  { name: "Light Gray", hex: "#b4ada1" },
+  { name: "Cedar", hex: "#b07a4a" },
+  { name: "Rustic Cedar", hex: "#8a4a2a" },
+  { name: "Black", hex: "#15120e" },
+  { name: "Cappuccino", hex: "#5e4530" },
+  { name: "Early American", hex: "#6b4423" },
+  { name: "Clear", hex: "#dbb582" },
+];
+const stainName = (hex: string | null) =>
+  hex
+    ? STAIN_OPTIONS.find((s) => s.hex.toLowerCase() === hex.toLowerCase())?.name ?? "Custom"
+    : "Unfinished";
+
+const schema = z.object({
+  name: z.string().trim().min(1, "Required").max(120),
+  email: z.string().trim().email("Invalid email").max(255),
+  phone: z.string().trim().min(5, "Required").max(40),
+  fulfillmentType: z.enum(["delivery", "pickup"]),
+  address: z.string().trim().max(500).optional(),
+  notes: z.string().trim().max(2000).optional(),
+  sendCopyToCustomer: z.boolean().optional(),
+});
+
+export function QuoteDialog({
+  open,
+  onOpenChange,
+  config,
+  projectName,
+  tableStain,
+  deckStain,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  config: PavilionConfig;
+  projectName: string;
+  tableStain: string | null;
+  deckStain: string | null;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [fulfillmentType, setFulfillmentType] = useState<"delivery" | "pickup">("delivery");
+  const [address, setAddress] = useState("");
+  const [notes, setNotes] = useState("");
+  const [sendCopyToCustomer, setSendCopyToCustomer] = useState(true);
+  const [savePdf, setSavePdf] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+
+  const { data: pricing } = useQuery({
+    queryKey: ["pricing_data"],
+    queryFn: loadPricing,
+    staleTime: 60_000,
+  });
+
+  const quotePayload = useMemo(() => {
+    const wood = WOOD_FINISHES.find((w) => w.id === config.woodId);
+    const roofMat = ROOF_MATERIALS.find((r) => r.id === config.roofId);
+    const roofStyle = ROOF_STYLES.find((r) => r.id === config.roof)?.name;
+    const trussStyle = TRUSS_STYLES.find((t) => t.id === config.truss)?.name;
+    const rafterTail = RAFTER_TAILS.find((r) => r.id === config.rafterTail)?.name;
+
+    const sel = selectionFromConfig(config, {
+      beamStained: tableStain !== null,
+      deckStained: deckStain !== null,
+    });
+    const q = pricing ? computeQuote(sel, pricing) : null;
+
+    return {
+      projectName,
+      model: trussStyle ? `${trussStyle} Pavilion Package` : roofStyle ? `${roofStyle} Pavilion Package` : undefined,
+      trussStyle,
+      roofStyle,
+      size: `${config.width}′ × ${config.length}′`,
+      postHeight: `${config.height}′`,
+      timberFinish: wood?.name,
+      beamStain: stainName(tableStain),
+      deckboardStain: stainName(deckStain),
+      roofMaterial: roofMat
+        ? `${({ shingle: "Shingles", metal: "Ribbed Metal", "standing-seam": "Standing Seam" } as Record<string, string>)[roofMat.type] ?? roofMat.type} — ${roofMat.name}`
+        : undefined,
+      rafterTail,
+      snowGuards: !!config.snowGuards,
+      upgrades: [
+        tableStain ? `Beam stain — ${stainName(tableStain)}` : null,
+        deckStain ? `Deckboard stain — ${stainName(deckStain)}` : null,
+        config.snowGuards ? "Snow guards" : null,
+      ].filter(Boolean) as string[],
+      lineItems: q?.lines.map((l) => ({ label: l.label, amount: fmtUSD(l.amount) })),
+      total: q ? fmtUSD(q.total) : undefined,
+      priceNote: q?.callForPricing.length ? "Starting at" : "+ tax",
+    };
+  }, [config, projectName, tableStain, deckStain, pricing]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErrors({});
+    const fulfillment =
+      fulfillmentType === "pickup" ? "Pickup at KSM Log Homes" : address.trim();
+
+    const parsed = schema.safeParse({
+      name,
+      email,
+      phone,
+      fulfillmentType,
+      address,
+      notes,
+      sendCopyToCustomer,
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        fieldErrors[issue.path.join(".")] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+    if (fulfillmentType === "delivery" && !address.trim()) {
+      setErrors({ address: "Delivery address is required" });
+      return;
+    }
+
+    setSubmitting(true);
+    // Fire postMessage to parent window (if embedded in an iframe) in parallel
+    // with the API call so the embedder captures the lead even if our email
+    // send fails. Purely additive — standalone usage is unchanged.
+    try {
+      if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+        const payload = {
+          type: "ksm:quote-request",
+          customer: {
+            name: name.trim(),
+            email: email.trim(),
+            phone: phone.trim(),
+            fulfillment,
+            notes: notes.trim() || undefined,
+            sendCopyToCustomer,
+          },
+          quote: quotePayload,
+        };
+        window.parent.postMessage(payload, "*");
+      }
+    } catch (postErr) {
+      console.error("postMessage to parent failed", postErr);
+    }
+    try {
+
+      const res = await fetch("/api/public/request-quote", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          customer: {
+            name: name.trim(),
+            email: email.trim(),
+            phone: phone.trim(),
+            fulfillment,
+            notes: notes.trim() || undefined,
+            sendCopyToCustomer,
+          },
+          quote: quotePayload,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Request failed (${res.status})`);
+      }
+      if (savePdf) {
+        try {
+          downloadQuotePdf({
+            projectName,
+            customer: {
+              name: name.trim(),
+              email: email.trim(),
+              phone: phone.trim(),
+              fulfillment,
+              notes: notes.trim() || undefined,
+            },
+            quote: quotePayload,
+          });
+        } catch (pdfErr) {
+          console.error("Failed to generate PDF", pdfErr);
+          toast.error("Quote sent, but the PDF download failed.");
+        }
+      }
+      toast.success("Quote request sent! We'll be in touch soon.");
+      // Build unique shareable URL encoding the design config
+      let url = typeof window !== "undefined" ? window.location.href : "";
+      try {
+        const encoded = btoa(encodeURIComponent(JSON.stringify(config)));
+        const u = new URL(window.location.href);
+        u.hash = `design=${encoded}`;
+        url = u.toString();
+      } catch {}
+      setShareUrl(url);
+
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to send quote request");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function handleClose(o: boolean) {
+    if (!o) {
+      // reset after close
+      setShareUrl(null);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setAddress("");
+      setNotes("");
+    }
+    onOpenChange(o);
+  }
+
+  const shareText = "Check out my custom pavilion design from KSM Log Homes";
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0 bg-[#f5f1ea] border-ink/10">
+        <div className="px-7 pt-7 pb-5 border-b border-ink/10">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold tracking-tight text-ink text-left">
+              {shareUrl ? "Quote Saved" : "Save this Quote"}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-ink/70 leading-relaxed pt-1 text-left">
+              {shareUrl
+                ? "Your quote was sent to our team. Share your design with a unique link below."
+                : "We'll email your custom pavilion quote to our team. They'll reach out to answer any questions you have."}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+        <div className="px-7 py-6">
+
+
+        {shareUrl ? (
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs uppercase tracking-widest text-ink/50">Unique design link</Label>
+              <div className="mt-1.5 flex gap-2">
+                <Input readOnly value={shareUrl} onFocus={(e) => e.currentTarget.select()} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareUrl);
+                      toast.success("Link copied to clipboard");
+                    } catch {
+                      toast.error("Could not copy link");
+                    }
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs uppercase tracking-widest text-ink/50">Share to</Label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded border border-ui-border hover:bg-muted text-sm font-medium"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>
+                  Facebook
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded border border-ui-border hover:bg-muted text-sm font-medium"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  X
+                </a>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareUrl);
+                      toast.success("Link copied — paste into your Instagram story or bio");
+                    } catch {
+                      toast.error("Could not copy link");
+                    }
+                  }}
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded border border-ui-border hover:bg-muted text-sm font-medium"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.5" y2="6.5"/></svg>
+                  Instagram
+                </button>
+              </div>
+              <p className="text-[11px] text-ink/50 mt-2">
+                Instagram doesn't support direct link sharing — we'll copy the link so you can paste it into your story or bio.
+              </p>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success("Link copied to clipboard");
+                  } catch {
+                    toast.error("Could not copy link");
+                  }
+                }}
+              >
+                Copy link
+              </Button>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" onClick={() => handleClose(false)}>Done</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="q-name" className="text-xs uppercase tracking-widest font-semibold text-ink/60">Name</Label>
+            <Input
+              id="q-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={120}
+              required
+              className="h-11 bg-white border-ink/15 text-base"
+            />
+            {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="q-email" className="text-xs uppercase tracking-widest font-semibold text-ink/60">Email</Label>
+              <Input
+                id="q-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                maxLength={255}
+                required
+                className="h-11 bg-white border-ink/15 text-base"
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="q-phone" className="text-xs uppercase tracking-widest font-semibold text-ink/60">Phone</Label>
+              <Input
+                id="q-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                maxLength={40}
+                required
+                className="h-11 bg-white border-ink/15 text-base"
+              />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            <Label className="text-xs uppercase tracking-widest font-semibold text-ink/60">Fulfillment</Label>
+            <RadioGroup
+              value={fulfillmentType}
+              onValueChange={(v) => setFulfillmentType(v as "delivery" | "pickup")}
+              className="grid grid-cols-2 gap-3"
+            >
+              <label
+                htmlFor="ff-delivery"
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-md border-2 cursor-pointer transition-colors bg-white ${
+                  fulfillmentType === "delivery" ? "border-ink" : "border-ink/15 hover:border-ink/30"
+                }`}
+              >
+                <RadioGroupItem value="delivery" id="ff-delivery" />
+                <span className="font-medium text-sm">Delivery</span>
+              </label>
+              <label
+                htmlFor="ff-pickup"
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-md border-2 cursor-pointer transition-colors bg-white ${
+                  fulfillmentType === "pickup" ? "border-ink" : "border-ink/15 hover:border-ink/30"
+                }`}
+              >
+                <RadioGroupItem value="pickup" id="ff-pickup" />
+                <span className="font-medium text-sm">Pickup</span>
+              </label>
+            </RadioGroup>
+          </div>
+
+          {fulfillmentType === "delivery" && (
+            <div className="space-y-2">
+              <Label htmlFor="q-address" className="text-xs uppercase tracking-widest font-semibold text-ink/60">Delivery address</Label>
+              <Textarea
+                id="q-address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                rows={2}
+                maxLength={500}
+                placeholder="Street, city, state, zip"
+                className="bg-white border-ink/15 text-base resize-none"
+              />
+              {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="q-notes" className="text-xs uppercase tracking-widest font-semibold text-ink/60">
+              Notes <span className="text-ink/40 normal-case tracking-normal font-normal">(optional)</span>
+            </Label>
+            <Textarea
+              id="q-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              maxLength={2000}
+              placeholder="Anything else we should know?"
+              className="bg-white border-ink/15 text-base resize-none"
+            />
+          </div>
+
+          <div className="space-y-2.5 pt-1">
+            <label htmlFor="q-copy" className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                id="q-copy"
+                checked={sendCopyToCustomer}
+                onCheckedChange={(v) => setSendCopyToCustomer(v === true)}
+              />
+              <span className="text-sm text-ink">Email a copy of this quote to me</span>
+            </label>
+            <label htmlFor="q-pdf" className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                id="q-pdf"
+                checked={savePdf}
+                onCheckedChange={(v) => setSavePdf(v === true)}
+              />
+              <span className="text-sm text-ink">
+                Save quote as PDF <span className="text-ink/50">(downloads after submission)</span>
+              </span>
+            </label>
+          </div>
+
+          <div className="pt-4 space-y-3 border-t border-ink/10">
+            <div className="flex gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleClose(false)}
+                disabled={submitting}
+                className="flex-1 h-11 bg-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="flex-[2] h-11 bg-ink hover:bg-ink/90 text-white font-semibold uppercase tracking-wide"
+              >
+                {submitting ? "Sending…" : "Save this Quote"}
+              </Button>
+            </div>
+
+            <Button
+              type="button"
+              disabled={submitting}
+              onClick={async () => {
+                const { triggerOrderNow } = await import("@/lib/order-now");
+                await triggerOrderNow(config, {
+                  projectName,
+                  tableStain,
+                  deckStain,
+                  pricing,
+                });
+                toast.success("Order sent — redirecting to checkout…");
+              }}
+              className="w-full h-auto py-3.5 flex flex-col gap-0.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <span className="text-base font-bold tracking-wider uppercase">Order Now</span>
+              <span className="text-xs font-normal opacity-90">Place $2,500 Down Payment</span>
+            </Button>
+            <p className="text-xs text-ink/60 text-center">
+              Estimated lead time: <span className="font-semibold text-ink">4–6 weeks</span> from order confirmation.
+            </p>
+          </div>
+        </form>
+        )}
+        </div>
+
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+

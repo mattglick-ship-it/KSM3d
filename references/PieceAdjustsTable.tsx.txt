@@ -1,0 +1,152 @@
+import { useState } from "react";
+import type { PieceAdjust } from "./PieceAdjuster";
+
+/**
+ * Read-only table of every per-piece adjust for the current width.
+ * Opens as a floating panel from a small button — designed for screenshot
+ * backup of all coordinates before a refresh / accidental wipe.
+ */
+export function PieceAdjustsTable({
+  widthLabel,
+  adjusts,
+  pieceOffsetsIn,
+  pieceScales,
+  plateOffsetsIn,
+  trussScale,
+}: {
+  widthLabel: string;
+  adjusts: Record<string, PieceAdjust>;
+  pieceOffsetsIn?: Record<string, { x: number; y: number; z: number }>;
+  pieceScales?: Record<string, { x: number; y: number; z: number }>;
+  plateOffsetsIn?: Record<string, { x: number; y: number; z: number }>;
+  trussScale?: { x: number; y: number; z: number };
+}) {
+  const [open, setOpen] = useState(false);
+  const fmt = (n: number) => (Number.isFinite(n) ? Number(n.toFixed(3)).toString() : "—");
+
+  const adjustRows = Object.entries(adjusts).sort(([a], [b]) => a.localeCompare(b));
+  const offsetRows = pieceOffsetsIn ? Object.entries(pieceOffsetsIn).sort(([a], [b]) => a.localeCompare(b)) : [];
+  const scaleRows = pieceScales ? Object.entries(pieceScales).sort(([a], [b]) => a.localeCompare(b)) : [];
+  const plateRows = plateOffsetsIn ? Object.entries(plateOffsetsIn).sort(([a], [b]) => a.localeCompare(b)) : [];
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded border border-input bg-white px-2 py-1 text-xs font-semibold text-ink shadow-sm hover:bg-muted"
+        title="Open a read-only table of every current piece coordinate"
+      >
+        📋 Show coordinates table
+      </button>
+      {open && (
+        <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={() => setOpen(false)}>
+          <div
+            className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-border bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+              <div>
+                <div className="text-sm font-semibold">All coordinates — {widthLabel}</div>
+                <div className="text-[10px] text-muted-foreground">Read-only snapshot. Screenshot this to back up before refreshes.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded border border-input bg-background px-2 py-0.5 text-xs hover:bg-muted"
+              >
+                Close ×
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto p-4 font-mono text-[11px]">
+              {trussScale && (
+                <div className="mb-4">
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Truss group scale</div>
+                  <div>x: {fmt(trussScale.x)} · y: {fmt(trussScale.y)} · z: {fmt(trussScale.z)}</div>
+                </div>
+              )}
+
+              {adjustRows.length > 0 && (
+                <Table
+                  title="Piece adjusts (click-panel)"
+                  headers={["Piece", "off.x″", "off.y″", "off.z″", "ext xp/xn/yp/yn/zp/zn″", "scl.x", "scl.y", "scl.z", "hidden"]}
+                  rows={adjustRows.map(([k, a]) => {
+                    const s = a.scl ?? { x: 1, y: 1, z: 1 };
+                    return [
+                      k,
+                      fmt(a.off.x),
+                      fmt(a.off.y),
+                      fmt(a.off.z),
+                      `${fmt(a.ext.xp)}/${fmt(a.ext.xn)}/${fmt(a.ext.yp)}/${fmt(a.ext.yn)}/${fmt(a.ext.zp)}/${fmt(a.ext.zn)}`,
+                      fmt(s.x),
+                      fmt(s.y),
+                      fmt(s.z),
+                      a.hidden ? "yes" : "",
+                    ];
+                  })}
+                />
+              )}
+
+              {offsetRows.length > 0 && (
+                <Table
+                  title="Per-piece offsets (admin sliders, inches)"
+                  headers={["Piece", "x″", "y″", "z″"]}
+                  rows={offsetRows.map(([k, v]) => [k, fmt(v.x), fmt(v.y), fmt(v.z)])}
+                />
+              )}
+
+              {scaleRows.length > 0 && (
+                <Table
+                  title="Per-piece scales (admin sliders, ×)"
+                  headers={["Piece", "x", "y", "z"]}
+                  rows={scaleRows.map(([k, v]) => [k, fmt(v.x), fmt(v.y), fmt(v.z)])}
+                />
+              )}
+
+              {plateRows.length > 0 && (
+                <Table
+                  title="Decorative plate offsets (inches)"
+                  headers={["Plate", "x″", "y″", "z″"]}
+                  rows={plateRows.map(([k, v]) => [k, fmt(v.x), fmt(v.y), fmt(v.z)])}
+                />
+              )}
+
+              {adjustRows.length === 0 && offsetRows.length === 0 && scaleRows.length === 0 && plateRows.length === 0 && (
+                <div className="text-muted-foreground">No piece coordinates set for this width.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function Table({ title, headers, rows }: { title: string; headers: string[]; rows: string[][] }) {
+  return (
+    <div className="mb-6">
+      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-border bg-muted/40">
+              {headers.map((h) => (
+                <th key={h} className="px-2 py-1 text-left text-[10px] font-semibold text-ink">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} className="border-b border-border/50">
+                {r.map((c, j) => (
+                  <td key={j} className={`px-2 py-1 ${j === 0 ? "font-semibold" : ""}`}>{c}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+

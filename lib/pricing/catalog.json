@@ -1,0 +1,942 @@
+{
+  "meta": {
+    "catalogOnly": true,
+    "currency": "USD",
+    "droppedNonCatalogSizes": [
+      "10x10",
+      "10x14",
+      "10x24",
+      "12x12",
+      "12x14",
+      "12x40",
+      "14x26",
+      "16x16",
+      "16x32",
+      "16x40",
+      "18x18",
+      "18x32",
+      "18x36",
+      "20x30",
+      "20x36",
+      "22x60",
+      "24x16",
+      "24x24",
+      "24x30",
+      "24x32",
+      "24x40",
+      "30x34",
+      "30x40",
+      "32x32"
+    ],
+    "generatedAt": "2026-06-19T08:50:26",
+    "generatedFrom": "/agent/stored_files/cmqjtg3f50c0n06adfz34fwlx_2026 Pavilion pricing sheets.xlsx",
+    "notes": [
+      "Catalog-only mode: configurator offers ONLY the official retail catalog sizes.",
+      "basePriceByRoof is the official retail price for that size + roof material.",
+      "Retail prices already INCLUDE the truss plate package for sizes that have one (20'-wide and up).",
+      "options.* are ADD-ONS layered on the base price; fill any TODO (null) values.",
+      "To re-enable non-catalog sizes, set RESTRICT_TO_RETAIL_CATALOG=False in the importer."
+    ],
+    "openTodos": [],
+    "priceBasis": "basePriceByRoof = official RETAIL kit price (incl. truss plate package where applicable). Sizes not in the retail catalog use a provisional cost-derived price (retailVerified=false).",
+    "product": "Pavilion",
+    "retailSource": "/agent/stored_files/cmqjw1h3u0dkr08adgjwxh83l_2026 KSM Pavilions Pricing.xlsx",
+    "retailVerifiedCount": 12,
+    "schemaVersion": "1.1",
+    "sizeCount": 12
+  },
+  "options": {
+    "decorativeTrussPlates": {
+      "label": "Decorative Truss Plates",
+      "model": "byWidth",
+      "note": "Standard/in-base for 20'-wide+. Upgrade for narrower sizes (see size.decorativeTrussPlates).",
+      "reference20ftPrice": 2300.32,
+      "referenceIncludesLags": true,
+      "ui": "checkbox",
+      "underReferenceFactor": 0.95
+    },
+    "height": {
+      "label": "Height",
+      "model": "postLength",
+      "note": "Base height varies by size (basePostFt). Heights below a size's base post length are not offered.",
+      "offeredHeights": [
+        8,
+        9,
+        10
+      ],
+      "retailRatePerLF": [
+        {
+          "maxFt": 16,
+          "rate": 9.3
+        },
+        {
+          "maxFt": 24,
+          "rate": 10.8
+        }
+      ],
+      "ui": "dropdown"
+    },
+    "overhangFaceboard": {
+      "eaveOverhangFt": 1,
+      "label": "Overhang Faceboard",
+      "lumber": "2x6 S4S",
+      "markup": 0.1,
+      "model": "faceboardLF",
+      "note": "Price = faceboardLinearFt * retailRatePerLF * (1+markup). Per-size $ in size.overhangFaceboard.",
+      "rakeBoards": 4,
+      "retailRatePerLF": 1.91,
+      "ui": "checkbox"
+    },
+    "rafterTail": {
+      "choices": [
+        {
+          "id": "standard",
+          "label": "Standard Tail",
+          "price": {
+            "model": "none"
+          }
+        },
+        {
+          "id": "scroll_cut",
+          "label": "Scroll Cut Tail",
+          "price": {
+            "model": "perRafterAndTruss",
+            "rate": 50
+          }
+        }
+      ],
+      "label": "Rafters",
+      "note": "Scroll Cut = $50 x (rafters + trusses). Per-size $ in size.rafterTailUpgrade.",
+      "ui": "toggle"
+    },
+    "texturedMetal": {
+      "appliesTo": [
+        "metal",
+        "standing_seam"
+      ],
+      "label": "Textured Metal",
+      "model": "percentOfRoofingCost",
+      "note": "+8% of the selected roof's roofing-package cost (size.roofingCost). Per-size $ in size.texturedMetalUpcharge.",
+      "percent": 8,
+      "ui": "checkbox"
+    },
+    "timberFinish": {
+      "appliesTo": "Structural timbers (posts, girders, ridge, rafters, collar ties, truss members). Excludes hardware, T&G roof decking, faceboards, and angle braces by default \u2014 adjust FINISH_SCOPE.",
+      "choices": [
+        {
+          "id": "smooth",
+          "label": "Smooth",
+          "price": {
+            "model": "none"
+          }
+        },
+        {
+          "id": "hand_peeled",
+          "label": "Hand-Peeled",
+          "price": {
+            "basis": "timberLinearFt",
+            "model": "perLinearFt",
+            "rate": 2
+          }
+        },
+        {
+          "id": "hatchet_peeled",
+          "label": "Hatchet & Hand-Peeled",
+          "price": {
+            "basis": "timberLinearFt",
+            "model": "perLinearFt",
+            "rate": 3
+          }
+        },
+        {
+          "id": "rough_sawn",
+          "label": "Rough Sawn",
+          "price": {
+            "_confirm": "Proposed = 'Resaw for looks' $0.35/BF \u2014 confirm rate & basis",
+            "basis": "timberBoardFt",
+            "model": "perBoardFt",
+            "rate": 0.35
+          }
+        }
+      ],
+      "label": "Timber Finish",
+      "ui": "cards"
+    },
+    "trussStyle": {
+      "choices": [
+        {
+          "id": "king",
+          "label": "King Truss",
+          "price": {
+            "model": "none"
+          }
+        },
+        {
+          "id": "arched_king",
+          "label": "Arched King Truss",
+          "price": {
+            "basis": "trusses",
+            "model": "perTruss",
+            "rate": 200
+          }
+        },
+        {
+          "id": "hammer",
+          "label": "Hammer Truss",
+          "price": {
+            "basis": "trusses",
+            "model": "perTruss",
+            "rate": 200
+          }
+        }
+      ],
+      "label": "Truss Style",
+      "note": "Upgrade = $200 x truss count. size.trusses holds the count; per-size $ in size.trussStyleUpgrade.",
+      "ui": "cards"
+    }
+  },
+  "roofMaterials": [
+    {
+      "colors": [
+        "White",
+        "Almond",
+        "Light Gray",
+        "Gray",
+        "Tan",
+        "Galvalume",
+        "Charcoal Gray",
+        "Sage Green",
+        "Copper",
+        "Slate Gray",
+        "Ocean Blue",
+        "Barn Red",
+        "Bright Red",
+        "Brown",
+        "Forest Green",
+        "Brick Red",
+        "Black",
+        "Navy",
+        "Burgundy",
+        "Hunter Green",
+        "Black-2"
+      ],
+      "id": "metal",
+      "label": "Metal (GrandRib3)",
+      "priceKey": "metal",
+      "texturedUpchargePercent": 8
+    },
+    {
+      "colors": [
+        "White",
+        "Almond",
+        "Light Gray",
+        "Gray",
+        "Tan",
+        "Galvalume",
+        "Charcoal Gray",
+        "Sage Green",
+        "Copper",
+        "Slate Gray",
+        "Ocean Blue",
+        "Barn Red",
+        "Brown",
+        "Forest Green",
+        "Brick Red",
+        "Navy",
+        "Burgundy",
+        "Hunter Green",
+        "Black"
+      ],
+      "id": "standing_seam",
+      "label": "Standing Seam",
+      "priceKey": "standing_seam",
+      "texturedUpchargePercent": 8
+    },
+    {
+      "colors": [
+        "Charcoal",
+        "Brown",
+        "Slate Gray",
+        "Weathered Wood",
+        "White"
+      ],
+      "id": "shingles",
+      "label": "Shingles",
+      "priceKey": "shingle"
+    }
+  ],
+  "sizes": [
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 6973,
+        "shingles": 6899,
+        "standing_seam": 8353
+      },
+      "baseStructureCost": 5496.36,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 192,
+      "heightPricing": {
+        "8": 0,
+        "10": 74.4,
+        "12": 148.8,
+        "14": 223.2
+      },
+      "id": "12x16",
+      "label": "12' \u00d7 16'",
+      "length": 16,
+      "overhangFaceboard": {
+        "linearFt": 33.65,
+        "upcharge": 70.7
+      },
+      "postSize": "8x8",
+      "posts": 4,
+      "rafterTailUpgrade": {
+        "scroll_cut": 400,
+        "standard": 0
+      },
+      "rafters": 6,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 306,
+      "roofingCost": {
+        "metal": 842.64,
+        "standing_seam": 2096.6
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 67.41,
+        "standing_seam": 167.73
+      },
+      "timberBoardFt": 909.3,
+      "timberLinearFt": 252,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 12
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 8837,
+        "shingles": 8640,
+        "standing_seam": 10720
+      },
+      "baseStructureCost": 6968.6,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 240,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "12x20",
+      "label": "12' \u00d7 20'",
+      "length": 20,
+      "overhangFaceboard": {
+        "linearFt": 33.65,
+        "upcharge": 70.7
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 500,
+        "standard": 0
+      },
+      "rafters": 8,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 374,
+      "roofingCost": {
+        "metal": 1064.52,
+        "standing_seam": 2776.8
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 85.16,
+        "standing_seam": 222.14
+      },
+      "timberBoardFt": 1132,
+      "timberLinearFt": 308,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 12
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 9803,
+        "shingles": 9637,
+        "standing_seam": 12098
+      },
+      "baseStructureCost": 7730.96,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 288,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "12x24",
+      "label": "12' \u00d7 24'",
+      "length": 24,
+      "overhangFaceboard": {
+        "linearFt": 33.65,
+        "upcharge": 70.7
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 600,
+        "standard": 0
+      },
+      "rafters": 10,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 442,
+      "roofingCost": {
+        "metal": 1179.96,
+        "standing_seam": 3266.4
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 94.4,
+        "standing_seam": 261.31
+      },
+      "timberBoardFt": 1290.7,
+      "timberLinearFt": 352,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 12
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 9603,
+        "shingles": 9397,
+        "standing_seam": 11842
+      },
+      "baseStructureCost": 7513,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 280,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "14x20",
+      "label": "14' \u00d7 20'",
+      "length": 20,
+      "overhangFaceboard": {
+        "linearFt": 38.46,
+        "upcharge": 80.8
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 500,
+        "standard": 0
+      },
+      "rafters": 8,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 440,
+      "roofingCost": {
+        "metal": 1216.2,
+        "standing_seam": 3252
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 97.3,
+        "standing_seam": 260.16
+      },
+      "timberBoardFt": 1180,
+      "timberLinearFt": 324,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 14
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 10675,
+        "shingles": 10515,
+        "standing_seam": 13424
+      },
+      "baseStructureCost": 8375.16,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 336,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "14x24",
+      "label": "14' \u00d7 24'",
+      "length": 24,
+      "overhangFaceboard": {
+        "linearFt": 38.46,
+        "upcharge": 80.8
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 600,
+        "standard": 0
+      },
+      "rafters": 10,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 520,
+      "roofingCost": {
+        "metal": 1329,
+        "standing_seam": 3828
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 106.32,
+        "standing_seam": 306.24
+      },
+      "timberBoardFt": 1344.7,
+      "timberLinearFt": 370,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 14
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 12522,
+        "shingles": 12231,
+        "standing_seam": 16381
+      },
+      "baseStructureCost": 9738.44,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 392,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "14x28",
+      "label": "14' \u00d7 28'",
+      "length": 28,
+      "overhangFaceboard": {
+        "linearFt": 38.46,
+        "upcharge": 80.8
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 750,
+        "standard": 0
+      },
+      "rafters": 12,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 704,
+      "roofingCost": {
+        "metal": 1644.48,
+        "standing_seam": 5152.8
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 131.56,
+        "standing_seam": 412.22
+      },
+      "timberBoardFt": 1711.3,
+      "timberLinearFt": 458,
+      "trussStyleUpgrade": {
+        "arched_king": 600,
+        "hammer": 600,
+        "king": 0
+      },
+      "trusses": 3,
+      "width": 14
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 10416,
+        "shingles": 10130,
+        "standing_seam": 13050
+      },
+      "baseStructureCost": 8136.2,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 320,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "16x20",
+      "label": "16' \u00d7 20'",
+      "length": 20,
+      "overhangFaceboard": {
+        "linearFt": 43.27,
+        "upcharge": 90.9
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 500,
+        "standard": 0
+      },
+      "rafters": 8,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 528,
+      "roofingCost": {
+        "metal": 1332.84,
+        "standing_seam": 3727.2
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 106.63,
+        "standing_seam": 298.18
+      },
+      "timberBoardFt": 1276,
+      "timberLinearFt": 356,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 16
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 11521,
+        "shingles": 11337,
+        "standing_seam": 14911
+      },
+      "baseStructureCost": 9036.12,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 384,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "16x24",
+      "label": "16' \u00d7 24'",
+      "length": 24,
+      "overhangFaceboard": {
+        "linearFt": 43.27,
+        "upcharge": 90.9
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 600,
+        "standard": 0
+      },
+      "rafters": 10,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 616,
+      "roofingCost": {
+        "metal": 1437.12,
+        "standing_seam": 4519.2
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 114.97,
+        "standing_seam": 361.54
+      },
+      "timberBoardFt": 1452.7,
+      "timberLinearFt": 406,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 16
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 13998,
+        "shingles": 13624,
+        "standing_seam": 17785
+      },
+      "baseStructureCost": 11014.76,
+      "decorativeTrussPlates": {
+        "basis": "upgrade \u2014 20'-wide price - 5%",
+        "included": false,
+        "upcharge": 2185.3
+      },
+      "footprintSqFt": 448,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "16x28",
+      "label": "16' \u00d7 28'",
+      "length": 28,
+      "overhangFaceboard": {
+        "linearFt": 43.27,
+        "upcharge": 90.9
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 750,
+        "standard": 0
+      },
+      "rafters": 12,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 704,
+      "roofingCost": {
+        "metal": 1712.28,
+        "standing_seam": 5152.8
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 136.98,
+        "standing_seam": 412.22
+      },
+      "timberBoardFt": 1855.3,
+      "timberLinearFt": 506,
+      "trussStyleUpgrade": {
+        "arched_king": 600,
+        "hammer": 600,
+        "king": 0
+      },
+      "trusses": 3,
+      "width": 16
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 15873,
+        "shingles": 15632,
+        "standing_seam": 19397
+      },
+      "baseStructureCost": 12883.52,
+      "decorativeTrussPlates": {
+        "basis": "standard (in base price)",
+        "included": true,
+        "upcharge": 0
+      },
+      "footprintSqFt": 400,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "20x20",
+      "label": "20' \u00d7 20'",
+      "length": 20,
+      "overhangFaceboard": {
+        "linearFt": 52.88,
+        "upcharge": 111.1
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 500,
+        "standard": 0
+      },
+      "rafters": 8,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 648,
+      "roofingCost": {
+        "metal": 1546.44,
+        "standing_seam": 4749.6
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 123.72,
+        "standing_seam": 379.97
+      },
+      "timberBoardFt": 1793.3,
+      "timberLinearFt": 412,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 20
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 16975,
+        "shingles": 16446,
+        "standing_seam": 20580
+      },
+      "baseStructureCost": 13570.28,
+      "decorativeTrussPlates": {
+        "basis": "standard (in base price)",
+        "included": true,
+        "upcharge": 0
+      },
+      "footprintSqFt": 480,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "20x24",
+      "label": "20' \u00d7 24'",
+      "length": 24,
+      "overhangFaceboard": {
+        "linearFt": 52.88,
+        "upcharge": 111.1
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 500,
+        "standard": 0
+      },
+      "rafters": 8,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 702,
+      "roofingCost": {
+        "metal": 1697.16,
+        "standing_seam": 5138.4
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 135.77,
+        "standing_seam": 411.07
+      },
+      "timberBoardFt": 1893.3,
+      "timberLinearFt": 428,
+      "trussStyleUpgrade": {
+        "arched_king": 400,
+        "hammer": 400,
+        "king": 0
+      },
+      "trusses": 2,
+      "width": 20
+    },
+    {
+      "basePostFt": 8,
+      "basePriceByRoof": {
+        "metal": 20048,
+        "shingles": 19697,
+        "standing_seam": 24894
+      },
+      "baseStructureCost": 16271.76,
+      "decorativeTrussPlates": {
+        "basis": "standard (in base price)",
+        "included": true,
+        "upcharge": 0
+      },
+      "footprintSqFt": 560,
+      "heightPricing": {
+        "8": 0,
+        "10": 111.6,
+        "12": 223.2,
+        "14": 334.8
+      },
+      "id": "20x28",
+      "label": "20' \u00d7 28'",
+      "length": 28,
+      "overhangFaceboard": {
+        "linearFt": 52.88,
+        "upcharge": 111.1
+      },
+      "postSize": "8x8",
+      "posts": 6,
+      "rafterTailUpgrade": {
+        "scroll_cut": 750,
+        "standard": 0
+      },
+      "rafters": 12,
+      "retailVerified": true,
+      "roofSlope": "8/12",
+      "roofSqFt": 864,
+      "roofingCost": {
+        "metal": 1953.12,
+        "standing_seam": 6358.8
+      },
+      "status": "ok",
+      "texturedMetalUpcharge": {
+        "metal": 156.25,
+        "standing_seam": 508.7
+      },
+      "timberBoardFt": 2538.7,
+      "timberLinearFt": 590,
+      "trussStyleUpgrade": {
+        "arched_king": 600,
+        "hammer": 600,
+        "king": 0
+      },
+      "trusses": 3,
+      "width": 20
+    }
+  ]
+}
