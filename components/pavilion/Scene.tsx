@@ -58,6 +58,17 @@ function BackSun() {
 function CameraRig({ view, allowUnderside, measureEnabled = false }: { view: ViewPreset; allowUnderside: boolean; measureEnabled?: boolean }) {
   const controls = useRef<any>(null);
   const isCustomer = !allowUnderside;
+  // Keep both orbiting and panning above the ground, including under-roof mode.
+  const keepAboveGround = () => {
+    const c = controls.current;
+    if (!c) return;
+    const minimumHeight = 0.25;
+    if (c.object.position.y < minimumHeight || c.target.y < minimumHeight) {
+      c.object.position.y = Math.max(minimumHeight, c.object.position.y);
+      c.target.y = Math.max(minimumHeight, c.target.y);
+      c.object.lookAt(c.target);
+    }
+  };
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
@@ -92,6 +103,7 @@ function CameraRig({ view, allowUnderside, measureEnabled = false }: { view: Vie
   return (
     <OrbitControls
       ref={controls}
+      onChange={keepAboveGround}
       enabled={true}
       enablePan={!isCustomer}
       zoomToCursor={!isCustomer}
@@ -99,7 +111,7 @@ function CameraRig({ view, allowUnderside, measureEnabled = false }: { view: Vie
       minDistance={0.1}
       maxDistance={40}
       minPolarAngle={0}
-      maxPolarAngle={allowUnderside || view === "under" ? Math.PI : Math.PI / 2}
+      maxPolarAngle={view === "under" ? Math.PI : Math.PI / 2}
       {...(isCustomer ? { target: [0, 1.5, 0] as [number, number, number] } : {})}
     />
   );
