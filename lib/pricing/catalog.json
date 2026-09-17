@@ -193,6 +193,11 @@
       "label": "Truss Style",
       "note": "Upgrade = $200 x truss count. size.trusses holds the count; per-size $ in size.trussStyleUpgrade.",
       "ui": "cards"
+    },
+    "snowRetentionRates": {
+      "guardEach": 7.5,
+      "ribbedRailPerSection": 22.5,
+      "standingSeamRailPerFoot": 22.5
     }
   },
   "roofMaterials": [

@@ -16,7 +16,9 @@ const jsx=(type,props,...children)=>({type,props:{...props,children}});
 const assets={};
 for(const m of source.matchAll(/import (\w+) from "@\/assets\/([^\"]+)"/g))assets[m[1]]=JSON.parse(readFileSync('assets/'+m[2]));
 const loadStl=(url,enabled=true)=>{if(!enabled)return null;const b=readFileSync('public'+url);const geom=new STLLoader().parse(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength));geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();return{geom,axis:0}};
-const env={THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadStl,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
+const snowSource=readFileSync('lib/snow-retention.ts','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
+const snowGuardPositions=new Function(ts.transpileModule(snowSource,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return snowGuardPositions;')();
+const env={snowGuardPositions,THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadStl,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
 const compiled=ts.transpileModule(functions,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;
 const model=new Function(...Object.keys(env),compiled+';return {KingTruss,ArchTruss,PlumbRafter,SnowGuards,SeamRidges};')(...Object.values(env));
 function object(node){

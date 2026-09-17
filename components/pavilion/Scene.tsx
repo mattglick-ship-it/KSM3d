@@ -1,3 +1,4 @@
+import {TimberGrainMapping} from './TimberGrainMapping';
 import {Dimensions} from "./dimensions";
 import { Canvas, useLoader, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, ContactShadows, Environment } from "@react-three/drei";
@@ -509,6 +510,7 @@ export function Scene({
         <CameraRig view={view} allowUnderside={allowUnderside} measureEnabled={measureEnabled} />
         <MeasureTool enabled={measureEnabled} />
       </Suspense>
+      <TimberGrainMapping/>
     </Canvas>
   );
 }

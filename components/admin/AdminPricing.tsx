@@ -1,3 +1,4 @@
+import { DEFAULT_SNOW_RATES, type SnowRates } from '@/lib/snow-retention';
 import { useEffect, useMemo, useRef, useState } from "react";
 // xlsx imported dynamically inside handleFile to avoid SSR bundling issues
 import { loadPricing, savePricing, SEED_DOC } from "@/lib/pricing/store";
@@ -222,18 +223,16 @@ function ManualUpcharges({
       }
       hammer.price = { model: "bySize", amounts };
     }
-    for (const key of ["snowGuards", "snowRail"] as const) {
-      const amounts: Record<string, number | null> = {};
-      for (const size of doc.sizes) {
-        const input = draft[key][size.id]?.trim() ?? "";
-        const amount = input === "" ? null : Number(input);
-        if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
-          toast.error("Snow-retention prices must be nonnegative amounts or blank."); return;
-        }
-        amounts[size.id] = amount;
+    const rates = {} as SnowRates;
+    for (const key of Object.keys(DEFAULT_SNOW_RATES) as (keyof SnowRates)[]) {
+      const input = draft.snowRates[key].trim();
+      const rate = input === '' ? null : Number(input);
+      if (rate !== null && (!Number.isFinite(rate) || rate < 0)) {
+        toast.error('Snow-retention rates must be nonnegative amounts or blank.'); return;
       }
-      next.options[key] = {price: {model: "bySize", amounts}};
+      rates[key] = rate;
     }
+    next.options.snowRetentionRates = rates;
     await onSave(next);
   };
 
@@ -272,11 +271,11 @@ function ManualUpcharges({
         </div>
 
         <div>
-          <h3 className="text-base font-semibold">Snow retention — complete pavilion package</h3>
-          <p className="text-sm text-muted-foreground mb-3">Enter KSM's added price for both roof slopes. Blank means a quote is required.</p>
-          {doc.sizes.map(size => <div key={size.id} className="grid grid-cols-2 gap-3 mb-3">
-            {(["snowGuards", "snowRail"] as const).map(key => <Money key={key} label={`${size.label} · ${key === "snowGuards" ? "Snow guards" : "Snow rail"}`} value={draft[key][size.id] ?? ""} onChange={v => setDraft({...draft, [key]: {...draft[key], [size.id]: v}})} />)}
-          </div>)}
+          <h3 className="text-base font-semibold">Snow retention — unit rates</h3>
+          <p className="text-sm text-muted-foreground mb-3">The estimate counts guards and rail on both eaves. Ribbed-metal rail uses whole 10-foot sections per eave. Standing-seam rail uses the installed linear feet. Blank means a quote is required.</p>
+          <div className="grid grid-cols-1 gap-3">
+            {([['guardEach', 'Snow guard · per piece'], ['ribbedRailPerSection', 'Ribbed-metal rail · per 10′ section'], ['standingSeamRailPerFoot', 'Standing-seam rail · per linear foot']] as const).map(([key,label]) => <Money key={key} label={label} value={draft.snowRates[key]} onChange={v => setDraft({...draft,snowRates:{...draft.snowRates,[key]:v}})}/>)}
+          </div>
         </div>
         <Button onClick={apply} disabled={saving}>{saving ? "Saving…" : "Save upcharges"}</Button>
       </CardContent>
@@ -303,8 +302,7 @@ function Money({ label, value, onChange, small }: { label: string; value: string
 }
 
 type Draft = {
-  snowGuards: Record<string, string>;
-  snowRail: Record<string, string>;
+  snowRates: Record<keyof SnowRates, string>;
   archedKing: string;
   scrollCut: string;
   decorativePlates: string;
@@ -331,8 +329,7 @@ function extractDraft(doc: PricingDoc): Draft {
     decorativePlates: flat(doc.options.decorativeTrussPlates.price as { model: string; amount?: number | null }),
     faceboard: flat(doc.options.overhangFaceboard.price as { model: string; amount?: number | null }),
     texturedMetal: flat(doc.options.texturedMetal.price as { model: string; amount?: number | null }),
-    snowGuards: Object.fromEntries(doc.sizes.map(s => [s.id, String(doc.options.snowGuards?.price.amounts[s.id] ?? "")])),
-    snowRail: Object.fromEntries(doc.sizes.map(s => [s.id, String(doc.options.snowRail?.price.amounts[s.id] ?? "")])),
+    snowRates: Object.fromEntries(Object.entries({...DEFAULT_SNOW_RATES,...doc.options.snowRetentionRates}).map(([key,value])=>[key,value === null ? '' : String(value)])) as Record<keyof SnowRates,string>,
     hammerBySize,
   };
 }

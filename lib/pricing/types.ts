@@ -1,3 +1,4 @@
+import type { SnowRates } from '../snow-retention';
 // Pricing data types — see admin/pricing for shape.
 export type RoofKey = "metal" | "standing_seam" | "shingles";
 export type FinishId = "smooth" | "hand_peeled" | "hatchet_peeled" | "rough_sawn";
@@ -56,6 +57,7 @@ export type PricingDoc = {
     texturedUpcharge?: { model: string; amount: number | null };
   }>;
   options: {
+    snowRetentionRates?: Partial<SnowRates>;
     height: { label: string; ui: string; choices: Array<{ id: string; label: string; price: PriceModel }> };
     trussStyle: { label: string; ui: string; choices: Array<{ id: TrussStyleId; label: string; price: PriceModel }> };
     rafterTail: { label: string; ui: string; choices: Array<{ id: RafterTailId; label: string; price: PriceModel }> };

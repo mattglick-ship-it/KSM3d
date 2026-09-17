@@ -4,10 +4,10 @@ import * as THREE from 'three';
 // Tooling height is independent of the pine photograph: dark knots are pigment,
 // not deep holes. Values are metres, matching the pavilion's model units.
 export const TIMBER_SURFACES: Record<string, {roughness:number; depth:number; description:string}> = {
-  smooth: {roughness:0.62, depth:0.00035, description:'Planed faces with fine, natural pine grain.'},
-  'rough-sawn': {roughness:0.94, depth:0.0022, description:'Cross-grain saw marks and a coarse, matte surface.'},
-  'hand-peeled': {roughness:0.78, depth:0.008, description:'Long drawknife scallops with softly uneven facets.'},
-  'hatchet-hand-peeled': {roughness:0.88, depth:0.012, description:'Short hatchet cuts layered over hand-peeled facets.'},
+  smooth: {roughness:0.56, depth:0.00018, description:'Planed faces with fine, natural pine grain.'},
+  'rough-sawn': {roughness:0.94, depth:0.0013, description:'Cross-grain saw marks and a coarse, matte surface.'},
+  'hand-peeled': {roughness:0.78, depth:0.005, description:'Long drawknife scallops with softly uneven facets.'},
+  'hatchet-hand-peeled': {roughness:0.88, depth:0.007, description:'Short hatchet cuts layered over hand-peeled facets.'},
 };
 
 const heightMaps = new Map<string, THREE.DataTexture>();
@@ -28,9 +28,14 @@ export function createTimberHeightData(finish:string, size=512) {
       // Saw passes cross the grain, with torn fibres between passes.
       h=0.5+0.17*Math.sin(TAU*(u*64+0.18*Math.sin(TAU*v*2)))+0.11*Math.sin(TAU*u*137)+fine*0.22+fibers*0.04;
     } else if(finish==='hand-peeled'||finish==='hatchet-hand-peeled') {
-      const lane=v*9+0.24*Math.sin(TAU*u*2)+0.09*Math.sin(TAU*u*5);
-      const groove=0.5-0.5*Math.cos(TAU*lane);
-      h=0.32+0.36*Math.pow(groove,0.65)+0.07*Math.sin(TAU*(u*3+v*2))+fibers*0.022+fine*0.025;
+      // Staggered finite drawknife passes, not continuous corrugated grooves.
+      const lane=v*8, row=Math.floor(lane), across=fract(lane);
+      const along=u*7+hash(row,91), cell=Math.floor(along), t=fract(along);
+      const seed=hash(cell,row);
+      const feather=Math.pow(Math.sin(Math.PI*across),1.4);
+      const pass=Math.pow(Math.sin(Math.PI*t),0.75);
+      const facet=(t-0.5)*(0.05+0.08*seed);
+      h=0.58-(0.19+0.13*seed)*feather*pass+facet*feather+fibers*0.022+fine*0.018;
       if(finish==='hatchet-hand-peeled') {
         // Short, irregular axe incisions across the grain, as in KSM's
         // Mifflintown reference: sharp entry lip and a shallow sloping exit.
@@ -41,7 +46,7 @@ export function createTimberHeightData(finish:string, size=512) {
         const length=0.28+hash((cell+13)%13,row+31)*0.42;
         const ends=Math.max(0,1-Math.pow((t-0.5)/length,4));
         const cut=q>0&&q<0.38 ? Math.pow(1-q/0.38,1.5) : 0;
-        h-=cut*ends*(0.22+0.25*seed);
+        h-=cut*ends*(0.22+0.25*seed)*(seed>0.35?1:0.12);
 
       }
     }

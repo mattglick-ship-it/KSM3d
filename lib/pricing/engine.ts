@@ -1,3 +1,4 @@
+import { DEFAULT_SNOW_RATES, snowQuantities } from '../snow-retention';
 import type { PricingDoc, Selection, Quote, QuoteLine, HeightId, RoofKey, FinishId, TrussStyleId, RafterTailId } from "./types";
 import type { PavilionConfig } from "@/lib/pavilion-config";
 import { ROOF_MATERIALS, computeLinealFeet, STAIN_BEAM_RATE_PER_LF, STAIN_DECK_RATE_PER_LF } from "@/lib/pavilion-config";
@@ -126,7 +127,8 @@ export function computeQuote(sel: Selection, data: PricingDoc): Quote {
   if (sel.roof !== "shingles") {
     for (const [key, label] of [["snowGuards", "Snow guards"], ["snowRail", "Snow rail"]] as const) {
       if (!sel.config?.[key]) continue;
-      add(label, snowOptionAmount(data, sel.sizeId, key));
+      const option = snowOptionQuote(data, sel.config, key);
+      add(`${label} — ${option.detail}`, option.amount);
     }
   }
   const total = lines.reduce((acc, l) => acc + l.amount, 0);
@@ -190,11 +192,18 @@ export function selectionFromConfig(
 
 
 export const fmtUSD = (n: number) =>
-  n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 
 
-export function snowOptionAmount(data: PricingDoc, sizeId: string, key: "snowGuards" | "snowRail"): number | null {
-  const amount = data.options[key]?.price?.amounts?.[sizeId];
-  return typeof amount === "number" && Number.isFinite(amount) && amount >= 0 ? amount : null;
+export function snowOptionQuote(data: PricingDoc, config: PavilionConfig, key: "snowGuards" | "snowRail") {
+  const roofType = ROOF_MATERIALS.find(r => r.id === config.roofId)?.type;
+  if (!roofType || roofType === 'shingle') return { amount: null, detail: 'Unavailable on this roof' };
+  const q = snowQuantities(config, roofType);
+  const rates = { ...DEFAULT_SNOW_RATES, ...data.options.snowRetentionRates };
+  const rate = key === 'snowGuards' ? rates.guardEach : roofType === 'metal' ? rates.ribbedRailPerSection : rates.standingSeamRailPerFoot;
+  const quantity = key === 'snowGuards' ? q.guards : roofType === 'metal' ? q.railSections : q.railFeet;
+  const units = key === 'snowGuards' ? `${quantity} pieces` : roofType === 'metal' ? `${quantity} × 10′ sections` : `${Number(quantity.toFixed(2))} linear ft`;
+  if (typeof rate !== 'number' || !Number.isFinite(rate) || rate < 0) return { amount: null, detail: `${units} · price pending` };
+  return { amount: Math.round((quantity * rate + Number.EPSILON) * 100) / 100, detail: `${units} × ${fmtUSD(rate)}${key === 'snowGuards' ? '/piece' : roofType === 'metal' ? '/section' : '/ft'}` };
 }

@@ -1,3 +1,4 @@
+import { configureTimberMaterial } from './timber-grain';
 import { useMemo, useContext, useEffect } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
@@ -58,14 +59,14 @@ export function Hammer12GlbTruss({
   const finish = useContext(WoodFinishContext);
   const surface = useTimberSurface(grainTex, finish);
   const sharedMat = useMemo(() => {
-    const m = new THREE.MeshStandardMaterial({
+    const m = configureTimberMaterial(new THREE.MeshStandardMaterial({
       map: grainTex,
       ...surface,
       color: new THREE.Color(color),
       metalness: 0,
-    });
+    }), finish);
     return m;
-  }, [grainTex, color, surface]);
+  }, [grainTex, color, surface, finish]);
   useEffect(() => () => sharedMat.dispose(), [sharedMat]);
 
   const cloned = useMemo(() => {
@@ -112,4 +113,3 @@ export function Hammer12GlbTruss({
     </group>
   );
 }
-

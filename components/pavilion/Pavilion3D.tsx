@@ -1,3 +1,5 @@
+import { configureTimberMaterial } from './timber-grain';
+import { snowGuardPositions, snowRailLength, snowRoofLength } from '@/lib/snow-retention';
 import {NATURAL_PINE_BEAM,NATURAL_PINE_DECK} from '@/lib/natural-pine';
 import naturalPineDeckAsset from '@/assets/pine_planks.jpg.asset.json';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, useId, type ReactNode } from "react";
@@ -547,10 +549,10 @@ export function useWoodTexture(rotate: number, repeatXMul: number = 1, repeatYMu
     t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping;
     t.center.set(0.5, 0.5);
     const seed = `${hp.seed}:${randomSeed ?? "pine"}`;
-    t.rotation = rotate + (hash01(seed+":flip") < 0.5 ? Math.PI : 0);
-    // One quiet grain field rather than dense repeated knots on every face.
-    // Keep the original per-member orientation and aspect calibrations.
-    t.repeat.set(0.85 * repeatXMul, 0.8 * repeatYMul);
+    t.rotation = hash01(seed+":flip") < 0.5 ? Math.PI : 0;
+    // TimberGrainMapping supplies physical lengthwise UVs on all four sides.
+    // Legacy face/category rotations must not turn the grain across a member.
+    t.repeat.set(1, 1);
     t.offset.set(hash01(seed+":u"), hash01(seed+":v"));
     t.anisotropy = 16;
     t.generateMipmaps = true;
@@ -733,6 +735,7 @@ function WoodMaterial({
         color={lightened}
         side={side}
         onUpdate={(self) => {
+          configureTimberMaterial(self, finish);
           if (pieceKey) {
             self.userData.grainKey = `face:${faceId}:0`;
             self.userData.grainLabel = `${pieceLabel}`;
@@ -754,6 +757,7 @@ function WoodMaterial({
           color={lightened}
           side={side}
           onUpdate={(self) => {
+            configureTimberMaterial(self, finish);
             if (pieceKey) {
               self.userData.grainKey = `face:${faceId}:${i}`;
               self.userData.grainLabel = `${pieceLabel} · face ${i}`;
@@ -1117,25 +1121,7 @@ function SnowGuards({
   roofType?: "standing-seam" | "metal";
 }) {
   const IN = 0.0254;
-  // For metal (ribbed ag-panel) roofs, place one guard in every flat between
-  // ribs so they nestle in the pan instead of sitting on top of a rib. Ribs
-  // are 9" o.c. and centered, matching MetalRibs.
-  const ribSpacing = 9 * IN;
-  let positions: number[];
-  if (roofType === "metal") {
-    const ribCount = Math.max(2, Math.floor(panelDepth / ribSpacing) + 1);
-    const ribStart = -((ribCount - 1) * ribSpacing) / 2;
-    // Midpoint between consecutive ribs => one guard per flat pan.
-    positions = [];
-    for (let i = 0; i < ribCount - 1; i++) {
-      positions.push(ribStart + i * ribSpacing + ribSpacing / 2);
-    }
-  } else {
-    const count = Math.max(2, Math.floor(panelDepth / spacing));
-    const step = panelDepth / count;
-    const start = -panelDepth / 2 + step / 2;
-    positions = Array.from({ length: count }, (_, i) => start + i * step);
-  }
+  const positions = snowGuardPositions(panelDepth, roofType, spacing);
   // Two staggered rows up-slope from the eave
   const row1X = eaveSign * (slopeLen / 2 - 18 * IN);
   const row2X = eaveSign * (slopeLen / 2 - 26 * IN);
@@ -1273,6 +1259,7 @@ function SnowRail({
   eaveSign?: 1 | -1;
 }) {
   const IN = 0.0254;
+  const adjust = useContext(SnowRailAdjustContext);
   const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -1301,14 +1288,12 @@ function SnowRail({
     const targetHeight = 3 * IN;
     const crossScale = targetHeight / sz;
     // Always 16" shorter than the roof (8" inset on each end), centered.
-    const targetLen = Math.max(0.01, panelDepth - 16 * IN);
-    const lenScale = targetLen / sy;
+    const targetLen = snowRailLength(panelDepth);
+    const lenScale = targetLen / sy / Math.max(0.001, Math.abs(adjust.scale.y));
     g.scale(crossScale, lenScale, crossScale);
     g.computeVertexNormals();
     return g;
-  }, [raw, panelDepth]);
-
-  const adjust = useContext(SnowRailAdjustContext);
+  }, [raw, panelDepth, adjust.scale.y]);
   if (!geometry) return null;
 
   // Position near eave, on the roof surface. Local frame: X = across-slope,
@@ -5114,7 +5099,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
       {showRoof && config.roof === "gable" && (
         <GableRoof
           width={roofFullWidth}
-          length={l - postOffset * 2 + (config.gableOverhang ? 18 * 0.0254 * 2 : 0)}
+          length={snowRoofLength(config)}
           baseY={beamY + roofEaveY - ROOF_DROP + 0.0381 + ROOF_ONLY_LIFT}
           ridgeH={roofRidgeH}
           wood={wood}
