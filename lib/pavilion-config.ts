@@ -179,8 +179,7 @@ export const DEFAULT_CONFIG: PavilionConfig = {
 };
 
 /** Kit price sheet: [width, length] → { shingle, metal, standing-seam }. */
-export const PAVILION_SIZES: { width: number; length: number }[] = [
-  ...Object.values(EXPANDED_FRAMES).map(({width,length}) => ({width,length})),
+export const ORIGINAL_PAVILION_SIZES: { width: number; length: number }[] = [
   { width: 12, length: 16 },
   { width: 12, length: 20 },
   { width: 12, length: 24 },
@@ -193,6 +192,8 @@ export const PAVILION_SIZES: { width: number; length: number }[] = [
   { width: 20, length: 20 },
   { width: 20, length: 24 },
   { width: 20, length: 28 },
+];
+const CUSTOM_PAVILION_SIZES = [
   { width: 24, length: 24 },
   { width: 24, length: 28 },
   { width: 24, length: 32 },
@@ -210,11 +211,10 @@ export const PAVILION_SIZES: { width: number; length: number }[] = [
   { width: 32, length: 40 },
 ];
 
-export const CUSTOMER_PAVILION_SIZES = PAVILION_SIZES.filter(s => s.width < 24).sort((a,b) => a.width-b.width || a.length-b.length);
-/** Widths for which we don't yet have a retail kit price — show "Call for quote". */
-export const CALL_FOR_QUOTE_WIDTHS = new Set<number>([24, 28, 32]);
-export function isCallForQuote(width: number, _length: number): boolean {
-  return CALL_FOR_QUOTE_WIDTHS.has(width);
+export const CUSTOMER_PAVILION_SIZES = [...ORIGINAL_PAVILION_SIZES,...Object.values(EXPANDED_FRAMES).map(({width,length})=>({width,length}))].sort((a,b)=>a.width-b.width||a.length-b.length);
+export const PAVILION_SIZES = [...new Map([...CUSTOMER_PAVILION_SIZES,...CUSTOM_PAVILION_SIZES].map(s=>[`${s.width}x${s.length}`,s])).values()];
+export function isCallForQuote(width: number, length: number): boolean {
+  return !CUSTOMER_PAVILION_SIZES.some(s=>s.width===width&&s.length===length);
 }
 
 
@@ -274,14 +274,14 @@ export type LinealFeetBreakdown = {
  * 2x6 boards at 5.25" coverage.
  *
  * Legacy sizes retain their original estimate basis. Added sizes use their
- * reviewed post/truss/rafter counts, 8:12 pitch and selected gable overhang.
+ * reviewed post/truss/rafter counts, sheet roof pitch and selected gable overhang.
  */
 export function computeLinealFeet(c: PavilionConfig): LinealFeetBreakdown {
   const frame = expandedFrame(c.width, c.length);
   const W = c.width;
   const L = c.length;
   const H = c.height;
-  const pitchRise = c.roof === "flat" ? 0 : frame ? 8 : 4;
+  const pitchRise = c.roof === "flat" ? 0 : frame ? frame.pitch * 12 : 4;
   const slope = Math.sqrt(1 + (pitchRise / 12) ** 2); // ≈1.054 for 4:12
   const overhang = 1; // ft each side
 

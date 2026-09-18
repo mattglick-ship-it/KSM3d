@@ -1,4 +1,5 @@
 "use client";
+import {expandedFrame} from '@/lib/pavilion-layout';
 import {NATURAL_PINE_BEAM,NATURAL_PINE_DECK,NATURAL_PINE_BEAM_KEY,NATURAL_PINE_DECK_KEY} from '@/lib/natural-pine';
 import {useContext} from 'react';
 import {DefaultsContext} from './published-settings';
@@ -821,7 +822,7 @@ const widthKey = String(config.width);
 const isKingTruss = config.truss === "king";
 const pieceAdjustsKey = isKingTruss ? `king-${widthKey}` : widthKey;
 const pieceAdjusts = config.truss === "arch"
-    ? (archPieceAdjustsByWidth[widthKey] ?? ARCH_PIECE_ADJUSTS_DEFAULT)
+    ? (archPieceAdjustsByWidth[widthKey] ?? (expandedFrame(config.width,config.length)?.runtimeTruss ? {} : ARCH_PIECE_ADJUSTS_DEFAULT))
     : isKingTruss
       ? (pieceAdjustsByWidth[pieceAdjustsKey] ?? {})
       : is12Wide

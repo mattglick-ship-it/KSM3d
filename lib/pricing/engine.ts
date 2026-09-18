@@ -52,14 +52,14 @@ export function computeQuote(sel: Selection, data: PricingDoc): Quote {
   }
 
   // 3. HEIGHT
-  if (sel.height !== "8") {
+  if (sel.height !== "8" || (size.basePostFt ?? 8) > 8) {
     const h = heightAmount(size, sel.height);
     if (h == null) callForPricing.push(`Height ${sel.height}'`);
     else if (h > 0) lines.push({ label: `Height ${sel.height}'`, amount: h });
   }
 
-  // 4. TRUSS STYLE — per-size lookup. King = 0.
-  if (sel.trussStyle !== "king") {
+  // 4. TRUSS STYLE — the sheet package includes its designated base style.
+  if (sel.trussStyle !== (size.baseTrussStyle ?? "king")) {
     const amt = size.trussStyleUpgrade?.[sel.trussStyle];
     if (amt == null) callForPricing.push(`${sel.trussStyle} truss`);
     else if (amt > 0) {

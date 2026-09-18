@@ -1,10 +1,11 @@
 import {z} from 'zod';
+import {availableTrusses,availableHeights} from '@/lib/pavilion-layout';
 import {furnitureLayoutSchema,defaultFurnitureLayout,normalizeFurniture,type FurnitureLayout} from './furniture-layout';
 import {DEFAULT_CONFIG,CUSTOMER_PAVILION_SIZES,ROOF_MATERIALS,WOOD_FINISHES,type PavilionConfig} from '@/lib/pavilion-config';
 import type {ViewPreset} from './Scene';
 export const designSchema=z.object({
  version:z.literal(1),
- config:z.object({width:z.number(),length:z.number(),height:z.union([z.literal(8),z.literal(9),z.literal(10)]),roof:z.literal('gable'),post:z.enum(['square','brace']),truss:z.enum(['king','arch','hammer']),woodId:z.string().refine(v=>WOOD_FINISHES.some(x=>x.id===v)),roofId:z.string().refine(v=>ROOF_MATERIALS.some(x=>x.id===v)),trussPlates:z.boolean(),braceScale:z.number().min(0.25).max(1.5),snowGuards:z.boolean(),snowRail:z.boolean().optional(),rafterTail:z.enum(['standard','scroll']),gableFascia:z.boolean(),gableOverhang:z.boolean(),hideBackTruss:z.boolean().optional()}).refine(c=>CUSTOMER_PAVILION_SIZES.some(s=>s.width===c.width&&s.length===c.length),'Choose an available pavilion size'),
+ config:z.object({width:z.number(),length:z.number(),height:z.union([z.literal(8),z.literal(9),z.literal(10)]),roof:z.literal('gable'),post:z.enum(['square','brace']),truss:z.enum(['king','arch','hammer']),woodId:z.string().refine(v=>WOOD_FINISHES.some(x=>x.id===v)),roofId:z.string().refine(v=>ROOF_MATERIALS.some(x=>x.id===v)),trussPlates:z.boolean(),braceScale:z.number().min(0.25).max(1.5),snowGuards:z.boolean(),snowRail:z.boolean().optional(),rafterTail:z.enum(['standard','scroll']),gableFascia:z.boolean(),gableOverhang:z.boolean(),hideBackTruss:z.boolean().optional()}).refine(c=>CUSTOMER_PAVILION_SIZES.some(s=>s.width===c.width&&s.length===c.length),'Choose an available pavilion size').refine(c=>availableTrusses(c.width,c.length).includes(c.truss),'Choose a truss offered for this package').refine(c=>availableHeights(c.width,c.length).includes(c.height),'Choose a post height offered for this package'),
  tableStain:z.string().regex(/^#[0-9a-f]{6}$/i).nullable(),deckStain:z.string().regex(/^#[0-9a-f]{6}$/i).nullable(),
  notes:z.string().max(2000),
  furniture:z.enum(['none','picnic','sectional','dining','patio','grill']).default('none'),

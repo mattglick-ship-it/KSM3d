@@ -1,0 +1,502 @@
+{
+  "10x10": {
+    "sheet": "10x10",
+    "cells": {
+      "shingles": "F48",
+      "standing_seam": "F59",
+      "metal": "F74"
+    },
+    "prices": {
+      "shingles": 4633.77,
+      "standing_seam": 5810.11,
+      "metal": 4821.21
+    },
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 1,
+    "braces": 8,
+    "pitch": 0.5,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "10x14": {
+    "sheet": "10x14",
+    "cells": {
+      "shingles": "F49",
+      "standing_seam": "F60",
+      "metal": "F75"
+    },
+    "prices": {
+      "shingles": 5959.1,
+      "standing_seam": 7329.48,
+      "metal": 6049.52
+    },
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "10x24": {
+    "sheet": "10x24",
+    "cells": {
+      "shingles": "F48",
+      "standing_seam": "F59",
+      "metal": "F74"
+    },
+    "prices": {
+      "shingles": 8905.89,
+      "standing_seam": 10917.79,
+      "metal": 9058.08
+    },
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 5,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "12x12": {
+    "sheet": "12x12",
+    "cells": {
+      "shingles": "F48",
+      "standing_seam": "F59",
+      "metal": "F74"
+    },
+    "prices": {
+      "shingles": 5880.51,
+      "standing_seam": 6961.81,
+      "metal": 5972.91
+    },
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 2,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "12x14": {
+    "sheet": "12x14",
+    "cells": {
+      "shingles": "F50",
+      "standing_seam": "F61",
+      "metal": "F76"
+    },
+    "prices": {
+      "shingles": 6675.44,
+      "standing_seam": 8128.98,
+      "metal": 6749.62
+    },
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "12x40": {
+    "sheet": "12x40",
+    "cells": {
+      "shingles": "F48",
+      "standing_seam": "F59",
+      "metal": "F73"
+    },
+    "prices": {
+      "shingles": 15368.06,
+      "standing_seam": 19581.5,
+      "metal": 15533.98
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "14x26": {
+    "sheet": "14x26",
+    "cells": {
+      "shingles": "F48",
+      "standing_seam": "F58",
+      "metal": "F72"
+    },
+    "prices": {
+      "shingles": 11779.35,
+      "standing_seam": 15506.5,
+      "metal": 12054.83
+    },
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 4,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "16x16": {
+    "sheet": "16x16",
+    "cells": {
+      "shingles": "F48",
+      "standing_seam": "F58",
+      "metal": "F72"
+    },
+    "prices": {
+      "shingles": 8625.69,
+      "standing_seam": 11070.33,
+      "metal": 8854.45
+    },
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "16x32": {
+    "sheet": "16x32",
+    "cells": {
+      "shingles": "F50",
+      "standing_seam": "F60",
+      "metal": "F74"
+    },
+    "prices": {
+      "shingles": 15164.62,
+      "standing_seam": 19829.5,
+      "metal": 15482.48
+    },
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "16x40": {
+    "sheet": "16x40",
+    "cells": {
+      "shingles": "F50",
+      "standing_seam": "F60",
+      "metal": "F74"
+    },
+    "prices": {
+      "shingles": 18962.42,
+      "standing_seam": 24683.3,
+      "metal": 19458.74
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "18x18": {
+    "sheet": "18x18",
+    "cells": {
+      "shingles": "F49",
+      "standing_seam": "F59",
+      "metal": "F73"
+    },
+    "prices": {
+      "shingles": 11433.64,
+      "standing_seam": 14406.28,
+      "metal": 11660.55
+    },
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "18x20": {
+    "sheet": "18x20 (HB)",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 16546.44,
+      "standing_seam": 20511.72,
+      "metal": 16792.36
+    },
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 4,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "hammer"
+  },
+  "18x32": {
+    "sheet": "18x32",
+    "cells": {
+      "shingles": "F49",
+      "standing_seam": "F59",
+      "metal": "F73"
+    },
+    "prices": {
+      "shingles": 17522.32,
+      "standing_seam": 22599.04,
+      "metal": 17837.27
+    },
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "18x36": {
+    "sheet": "18x36",
+    "cells": {
+      "shingles": "F49",
+      "standing_seam": "F59",
+      "metal": "F73"
+    },
+    "prices": {
+      "shingles": 20427.07,
+      "standing_seam": 26095.15,
+      "metal": 20717.99
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "20x30": {
+    "sheet": "20x30",
+    "cells": {
+      "shingles": "F52",
+      "standing_seam": "F62",
+      "metal": "F76"
+    },
+    "prices": {
+      "shingles": 18270.52,
+      "standing_seam": 23677.24,
+      "metal": 18516.17
+    },
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "20x36": {
+    "sheet": "20x36",
+    "cells": {
+      "shingles": "F50",
+      "standing_seam": "F61",
+      "metal": "F75"
+    },
+    "prices": {
+      "shingles": 22085.01,
+      "standing_seam": 28505.49,
+      "metal": 22433.22
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "22x60": {
+    "sheet": "22x60",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 41177.22,
+      "standing_seam": 52370.82,
+      "metal": 41777.3
+    },
+    "posts": 14,
+    "trusses": 4,
+    "rafterPairs": 12,
+    "braces": 32,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "24x16": {
+    "sheet": "24x16",
+    "cells": {
+      "shingles": "F51",
+      "standing_seam": "F61",
+      "metal": "F75"
+    },
+    "prices": {
+      "shingles": 15513.34,
+      "standing_seam": 24861.58,
+      "metal": 15776.55
+    },
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "24x24": {
+    "sheet": "24x24",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 19064.36,
+      "standing_seam": 24479.0,
+      "metal": 19349.09
+    },
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 5,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "24x30": {
+    "sheet": "24x30",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 24745.97,
+      "standing_seam": 31216.61,
+      "metal": 25069.37
+    },
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "24x32": {
+    "sheet": "24x32",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 25127.72,
+      "standing_seam": 31598.36,
+      "metal": 25451.12
+    },
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "24x40": {
+    "sheet": "24x40",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 30453.08,
+      "standing_seam": 38935.4,
+      "metal": 30994.41
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 8,
+    "baseTruss": "king"
+  },
+  "30x34": {
+    "sheet": "30x34",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 33399.12,
+      "standing_seam": 42285.36,
+      "metal": 33547.49
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 10,
+    "baseTruss": "king"
+  },
+  "30x40": {
+    "sheet": "30x40",
+    "cells": {
+      "shingles": "F53",
+      "standing_seam": "F63",
+      "metal": "F77"
+    },
+    "prices": {
+      "shingles": 33399.12,
+      "standing_seam": 42285.36,
+      "metal": 33547.49
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "baseHeight": 10,
+    "baseTruss": "king"
+  },
+  "32x32": {
+    "sheet": "32x32",
+    "cells": {
+      "shingles": "F52",
+      "standing_seam": "F62",
+      "metal": "F76"
+    },
+    "prices": {
+      "shingles": 36567.45,
+      "standing_seam": 44946.81,
+      "metal": 36826.7
+    },
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 22,
+    "pitch": 0.5,
+    "baseHeight": 10,
+    "baseTruss": "king"
+  }
+}

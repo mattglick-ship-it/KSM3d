@@ -22,6 +22,9 @@ export type SizeRow = {
   trusses?: number;
   rafters?: number;
   basePostFt?: number;
+  baseTrussStyle?: TrussStyleId;
+  sourceSheet?: string;
+  sourceCells?: Partial<Record<RoofKey,string>>;
   postSize?: string;
   roofSqFt?: number;
   timberLinearFt: number;

@@ -2,10 +2,21 @@ import seed from './catalog.json';
 import {EXPANDED_FRAMES} from '../pavilion-layout';
 import type {PricingDoc} from './types';
 
-/** Older published catalogs keep their overrides and gain only missing new rows.
- * An existing row (even with blank prices) is an intentional admin decision. */
+/** Adopt the approved workbook bases once for additions only. Original rows and
+ * option overrides stay intact. After adoption, admin edits (including blanks)
+ * remain authoritative. Loading never writes back to the published catalog. */
 export function withExpandedSizes(doc: PricingDoc): PricingDoc {
-  const present = new Set(doc.sizes.map(s => s.id));
-  const missing = (seed as unknown as PricingDoc).sizes.filter(s => s.id in EXPANDED_FRAMES && !present.has(s.id));
-  return {...doc, sizes: [...doc.sizes, ...structuredClone(missing)].sort((a,b) => a.width-b.width || a.length-b.length)};
+  const approved = seed as unknown as PricingDoc;
+  const revision = approved.meta.workbookPricingRevision;
+  const adopt = doc.meta.workbookPricingRevision !== revision;
+  const additions = approved.sizes.filter(s=>s.id in EXPANDED_FRAMES);
+  const present = new Set(doc.sizes.map(s=>s.id));
+  const sizes = doc.sizes.map(row=>{
+    const source=adopt ? additions.find(s=>s.id===row.id) : undefined;
+    if(!source)return row;
+    return {...row,basePriceByRoof:{...source.basePriceByRoof},baseTrussStyle:source.baseTrussStyle,
+      dataIssue:source.dataIssue,status:source.status,sourceSheet:source.sourceSheet,sourceCells:source.sourceCells};
+  });
+  return {...doc,meta:{...doc.meta,workbookPricingRevision:revision},
+    sizes:[...sizes,...structuredClone(additions.filter(s=>!present.has(s.id)))].sort((a,b)=>a.width-b.width||a.length-b.length)};
 }

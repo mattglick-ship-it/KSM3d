@@ -1991,36 +1991,25 @@ function BeamBetween({
   );
 }
 
-function CurvedTimber({
-  start,
-  control,
-  end,
-  radius,
-  color,
-  piece,
-}: {
-  start: [number, number];
-  control: [number, number];
-  end: [number, number];
-  radius: number;
-  color: string;
-  piece: string;
+function CurvedTimber({start,control,end,radius,color,piece}: {
+  start:[number,number];control:[number,number];end:[number,number];radius:number;color:string;piece:string;
 }) {
-  const geom = useMemo(() => {
-    const curve = new THREE.QuadraticBezierCurve3(
-      new THREE.Vector3(start[0], start[1], 0),
-      new THREE.Vector3(control[0], control[1], 0),
-      new THREE.Vector3(end[0], end[1], 0),
-    );
-    const g = new THREE.TubeGeometry(curve, 28, radius, 10, false);
-    g.computeVertexNormals();
+  const geom=useMemo(()=>{
+    // Flat stock faces and square edges, with a curved outline sawn through
+    // the timber. The shared grain mapper follows the stock's long axis.
+    const curve=new THREE.QuadraticBezierCurve(new THREE.Vector2(...start),new THREE.Vector2(...control),new THREE.Vector2(...end));
+    const upper:THREE.Vector2[]=[],lower:THREE.Vector2[]=[];
+    for(let i=0;i<=32;i++){
+      const t=i/32,p=curve.getPoint(t),tangent=curve.getTangent(t);
+      const offset=new THREE.Vector2(-tangent.y,tangent.x).multiplyScalar(radius);
+      upper.push(p.clone().add(offset));lower.push(p.clone().sub(offset));
+    }
+    const shape=new THREE.Shape([...upper,...lower.reverse()]);shape.closePath();
+    const depth=5.5*0.0254;
+    const g=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:false});g.translate(0,0,-depth/2);
     return g;
-  }, [start[0], start[1], control[0], control[1], end[0], end[1], radius]);
-  return (
-    <mesh geometry={geom} castShadow receiveShadow>
-      <WoodMaterial color={color} category="truss" piece={piece} singleMaterial tileRepeat={[3, 0.8]} />
-    </mesh>
-  );
+  },[start[0],start[1],control[0],control[1],end[0],end[1],radius]);
+  return <mesh geometry={geom} castShadow receiveShadow><WoodMaterial color={color} category="truss" piece={piece} singleMaterial /></mesh>;
 }
 
 function SteelRectPlate({
@@ -2093,6 +2082,7 @@ function RuntimeArchTruss({
   baseY,
   peakY,
   color,
+  memberHeightIn = 6,
   plates = false,
   seatLower = 0,
   tailStyle = "standard",
@@ -2104,6 +2094,7 @@ function RuntimeArchTruss({
   baseY: number;
   peakY: number;
   color: string;
+  memberHeightIn?: number;
   plates?: boolean;
   seatLower?: number;
   tailStyle?: "standard" | "scroll";
@@ -2111,7 +2102,7 @@ function RuntimeArchTruss({
   exteriorFace?: 1 | -1;
 }) {
   const IN = 0.0254;
-  const profile = 6 * IN;
+  const profile = memberHeightIn * IN;
   const depth = 5.5 * IN;
   const half = span / 2;
   const rise = peakY - baseY;
@@ -2156,7 +2147,7 @@ function RuntimeArchTruss({
             <BeamBetween start={strutStart} end={strutEnd} thickness={profile * 0.78} depth={depth} color={color} piece={`arch.runtime.strut.${s === 1 ? "r" : "l"}`} />
             {plates && (
               <>
-                <SteelVJointPlate position={heel} zPush={zPush} size={plateSize} angle={pitchAngle * 0.55} />
+                <SteelRectPlate position={heel} zPush={zPush} width={profile * 1.6} height={profile * 0.9} />
                 <SteelRectPlate position={archEnd} zPush={zPush} width={plateSize * 0.65} height={plateSize * 0.9} rotationZ={s * 0.12} />
                 <SteelRectPlate position={strutEnd} zPush={zPush} width={plateSize * 0.58} height={plateSize * 0.92} rotationZ={s * pitchAngle} />
               </>
@@ -2166,10 +2157,10 @@ function RuntimeArchTruss({
       })}
       {plates && isOuter && (
         <SteelRectPlate
-          position={[0, rise - profile * 0.45]}
+          position={[0, rise - profile * 0.65]}
           zPush={zPush}
-          width={plateSize * 0.85}
-          height={plateSize * 1.05}
+          width={profile * 1.2}
+          height={profile * 1.4}
           faces={[exteriorFace]}
         />
       )}
@@ -2183,6 +2174,7 @@ function RuntimeHammerTruss({
   baseY,
   peakY,
   color,
+  memberHeightIn = 6,
   plates = false,
   seatLower = 0,
   tailStyle = "standard",
@@ -2194,6 +2186,7 @@ function RuntimeHammerTruss({
   baseY: number;
   peakY: number;
   color: string;
+  memberHeightIn?: number;
   plates?: boolean;
   seatLower?: number;
   tailStyle?: "standard" | "scroll";
@@ -2201,7 +2194,7 @@ function RuntimeHammerTruss({
   peakPlateFace?: 1 | -1 | 0;
 }) {
   const IN = 0.0254;
-  const profile = 6 * IN;
+  const profile = memberHeightIn * IN;
   const depth = 5.5 * IN;
   const half = span / 2;
   const rise = peakY - baseY;
@@ -2249,7 +2242,7 @@ function RuntimeHammerTruss({
             <CurvedTimber start={[outer[0], profile * 0.12]} control={archCtrl} end={inner} radius={profile * 0.35} color={color} piece={`hammer.runtime.corbel.${s === 1 ? "r" : "l"}`} />
             {plates && (
               <>
-                <SteelVJointPlate position={outer} zPush={zPush} size={plateSize} angle={pitchAngle * 0.55} />
+                <SteelRectPlate position={outer} zPush={zPush} width={profile * 1.6} height={profile * 0.9} />
                 <SteelRectPlate position={princeTop} zPush={zPush} width={plateSize * 0.58} height={plateSize} rotationZ={s * pitchAngle} />
               </>
             )}
@@ -2258,10 +2251,10 @@ function RuntimeHammerTruss({
       })}
       {plates && showPeakPlate && peakPlateFace !== 0 && (
         <SteelRectPlate
-          position={[0, rise - profile * 0.45]}
+          position={[0, rise - profile * 0.65]}
           zPush={zPush}
-          width={plateSize * 0.85}
-          height={plateSize * 1.05}
+          width={profile * 1.2}
+          height={profile * 1.4}
           faces={[peakPlateFace]}
         />
       )}
@@ -3456,6 +3449,7 @@ function HammerTruss({
 function KingTruss({
   span,
   memberHeightIn = 6,
+  parametricPlates = false,
   z,
   baseY,
   peakY,
@@ -3480,6 +3474,7 @@ function KingTruss({
 }: {
   span: number;
   memberHeightIn?: number;
+  parametricPlates?: boolean;
   z: number;
   baseY: number;
   peakY: number;
@@ -3669,6 +3664,13 @@ function KingTruss({
           const absX = absX45 + 6 * IN;
           return [s * absX, rise - tanA * absX - profile * 0.05];
         };
+        if(parametricPlates) return <group name="king-plates">
+          {isOuter && peakPlateFace!==0 && <SteelRectPlate position={[0,rise-profile*0.65]} zPush={zPush} width={profile*1.2} height={profile*1.4} faces={[peakPlateFace]} />}
+          {([1,-1] as const).map(s=><group key={s}>
+            <SteelRectPlate position={heelAnchorAt(s)} zPush={zPush} width={profile*2.2} height={profile*1.2} />
+            <SteelRectPlate position={webAnchorAt(s)} zPush={zPush} width={profile*1.3} height={profile*2} rotationZ={s*pitchAngle} />
+          </group>)}
+        </group>;
         const plateMat = (
           <meshStandardMaterial color="#141414" roughness={0.4} metalness={0.85} />
         );
@@ -3901,7 +3903,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   const beamY = h + beamT / 2; // bottom of beam sits on top of post
 
   // Roof — pitch shared by trusses and roof slopes (8/12).
-  const pitch = config.roof === "flat" ? 0.05 : 8 / 12;
+  const pitch = config.roof === "flat" ? 0.05 : frame?.pitch ?? 8 / 12;
   const overhang = 18 * 0.0254; // 18" gable-rake overhang (length direction)
   const trussSpan = w - postOffset * 2;
   // Peak height above the wall beam, set by truss span at the shared pitch.
@@ -3917,7 +3919,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   // Rafters seat on top of the girder (lift = beamT/2 above beamY), and the
   // rafter top edge is rafterT / cos(angle) above the rafter seat.
   // Sheet profiles describe the King package; alternate styles retain their authored geometry.
-  const rafterHeightIn = frame && (config.truss === "king" || config.truss === "none") ? frame.rafterIn[1] : 6;
+  const rafterHeightIn = frame && (frame.runtimeTruss || config.truss === "king" || config.truss === "none") ? frame.rafterIn[1] : 6;
   const rafterT = rafterHeightIn * 0.0254;
   const slopeLen = Math.hypot(1, pitch);
   // Raise the trusses + rafters as one piece so the birdsmouth notch can be
@@ -4189,14 +4191,14 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
               tailStyle: config.rafterTail,
             };
             if (config.truss === "arch") {
-              if (isLargeRuntimeSpan(common.span)) {
-                return <RuntimeArchTruss key={`rat-${i}`} {...common} plates={config.trussPlates} isOuter={i === 0 || i === count - 1} exteriorFace={i === 0 ? -1 : 1} />;
+              if (frame?.runtimeTruss || isLargeRuntimeSpan(common.span)) {
+                return <RuntimeArchTruss key={`rat-${i}`} {...common} memberHeightIn={rafterHeightIn} plates={config.trussPlates} isOuter={i === 0 || i === count - 1} exteriorFace={i === 0 ? -1 : 1} />;
               }
               return <ArchTruss key={`at-${i}`} {...common} plates={config.trussPlates} archPlateOffset={archPlateOffset} archPlateRotation={archPlateRotation} archPlateSizeScale={archPlateSizeScale} simplePlateOffset={simplePlateOffset} simplePlateRotation={simplePlateRotation} simplePlateSizeScale={simplePlateSizeScale} topPlateOffset={topPlateOffset} topPlateRotation={topPlateRotation} topPlateSizeScale={topPlateSizeScale} webPlate2Offset={webPlate2Offset} webPlate2Rotation={webPlate2Rotation} webPlate2SizeScale={webPlate2SizeScale} isOuter={i === 0 || i === count - 1} exteriorFace={i === 0 ? -1 : 1} />;
             }
             if (config.truss === "hammer") {
-              if (isLargeRuntimeSpan(common.span)) {
-                return <RuntimeHammerTruss key={`rht-${i}`} {...common} plates={config.trussPlates} showPeakPlate={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
+              if (frame?.runtimeTruss || isLargeRuntimeSpan(common.span)) {
+                return <RuntimeHammerTruss key={`rht-${i}`} {...common} memberHeightIn={rafterHeightIn} plates={config.trussPlates} showPeakPlate={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
               }
               // Every hand-modeled hammer GLB auto-fits its widest horizontal
               // axis to the requested `span`, so widths above 20′ (24/28/32)
@@ -4248,7 +4250,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
               }
               return <HammerTruss key={`ht-${i}`} {...common} yOffset={hammerYOffset} scaleX={hammerScale.x} scaleY={hammerScale.y} scaleZ={hammerScale.z} groupOffset={hammerGroupOffset} corbelScale={hammerCorbelScale} corbelOffset={hammerCorbelOffset} corbelRotation={hammerCorbelRotation} pieceOffsets={hammerPieceOffsets} pieceScales={hammerPieceScales} uniformProfile55={hammerUniformProfile55} useDedicated20Stl={config.width === 20} borrowAll20Pieces={false} plateOffset={plateOffset} plateRotation={plateRotation} plateSizeScale={plateSizeScale} webPlateOffset={webPlateOffset} webPlateRotation={webPlateRotation} webPlateSizeScale={webPlateSizeScale} vPlateSurfaceInset={vPlateSurfaceInset} webPlateSurfaceInset={webPlateSurfaceInset} peakPlateOffset={peakPlateOffset} peakPlateRotation={peakPlateRotation} peakPlateSizeScale={peakPlateSizeScale} peakPlateSurfaceInset={peakPlateSurfaceInset} plateExtraOffsets={trussPlateExtraOffsets} showPeakPlate={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
             }
-            return <KingTruss key={`kt-${i}`} {...common} memberHeightIn={rafterHeightIn} peakPlateOffset={kingPeakPlateOffset} peakPlateRotation={kingPeakPlateRotation} peakPlateSizeScale={kingPeakPlateSizeScale} heelPlateOffset={kingHeelPlateOffset} heelPlateRotation={kingHeelPlateRotation} heelPlateSizeScale={kingHeelPlateSizeScale} webJointPlateOffset={kingWebPlateOffset} webJointPlateRotation={kingWebPlateRotation} webJointPlateSizeScale={kingWebPlateSizeScale} heelPlate2Offset={kingHeelPlate2Offset} heelPlate2Rotation={kingHeelPlate2Rotation} heelPlate2SizeScale={kingHeelPlate2SizeScale} isOuter={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
+            return <KingTruss key={`kt-${i}`} {...common} memberHeightIn={rafterHeightIn} parametricPlates={frame?.runtimeTruss} peakPlateOffset={kingPeakPlateOffset} peakPlateRotation={kingPeakPlateRotation} peakPlateSizeScale={kingPeakPlateSizeScale} heelPlateOffset={kingHeelPlateOffset} heelPlateRotation={kingHeelPlateRotation} heelPlateSizeScale={kingHeelPlateSizeScale} webJointPlateOffset={kingWebPlateOffset} webJointPlateRotation={kingWebPlateRotation} webJointPlateSizeScale={kingWebPlateSizeScale} heelPlate2Offset={kingHeelPlate2Offset} heelPlate2Rotation={kingHeelPlate2Rotation} heelPlate2SizeScale={kingHeelPlate2SizeScale} isOuter={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
           });
         })()}
 

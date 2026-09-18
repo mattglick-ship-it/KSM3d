@@ -11,7 +11,7 @@ require('./load-typescript.cjs');
 const {createPartGeometry,createHammerScene}=require('../components/pavilion/procedural-geometry.ts');
 const source=readFileSync('components/pavilion/Pavilion3D.tsx','utf8');
 const ast=ts.createSourceFile('model.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
-const wanted=['KingTruss','ArchTruss','PlumbRafter','SnowGuards','SeamRidges'];
+const wanted=['KingTruss','ArchTruss','RuntimeArchTruss','RuntimeHammerTruss','BeamBetween','CurvedTimber','SteelRectPlate','SteelVJointPlate','PlumbRafter','SnowGuards','SeamRidges'];
 const functions=ast.statements.filter(s=>ts.isFunctionDeclaration(s)&&wanted.includes(s.name?.text)).map(s=>s.getText(ast)).join('\n');
 const jsx=(type,props,...children)=>({type,props:{...props,children}});
 const assets={};
@@ -21,7 +21,7 @@ const snowSource=readFileSync('lib/snow-retention.ts','utf8').replace(/^import .
 const snowGuardPositions=new Function(ts.transpileModule(snowSource,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return snowGuardPositions;')();
 const env={snowGuardPositions,THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadPart,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
 const compiled=ts.transpileModule(functions,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;
-const model=new Function(...Object.keys(env),compiled+';return {KingTruss,ArchTruss,PlumbRafter,SnowGuards,SeamRidges};')(...Object.values(env));
+const model=new Function(...Object.keys(env),compiled+`;return {${wanted.join(',')}};`)(...Object.values(env));
 function object(node){
  if(!node||typeof node==='boolean')return null;
  if(Array.isArray(node)){const g=new THREE.Group();node.flat(Infinity).forEach(n=>{const o=object(n);if(o)g.add(o)});return g}
@@ -75,7 +75,8 @@ async function render(root,path,roof=false){
  await sharp(pixels,{raw:{width:w,height:h,channels:3}}).resize(640).png().toFile(path);console.log(path,count,'faces');
 }
 mkdirSync('public/truss-icons',{recursive:true});
-for(const width of [12,14,16,20])for(const style of ['king','arch','hammer']){
+const expandedOnly=process.argv.includes('--expanded-only');
+for(const width of (expandedOnly?[]:[12,14,16,20]))for(const style of ['king','arch','hammer']){
  const span=width*.3048-.3,rise=span/3;let root;
  if(style==='hammer'){
   root=createHammerScene(width,new THREE.MeshStandardMaterial({color:'#deb87c'}));
@@ -85,7 +86,25 @@ for(const width of [12,14,16,20])for(const style of ['king','arch','hammer']){
  }
  await render(root,`public/truss-icons/${style}-${width}.png`);
 }
+// New width families use the same parametric trusses as the live preview.
+const frames=JSON.parse(readFileSync('lib/pavilion-size-expansion.json','utf8'));
+for(const [width,length] of [[10,14],[18,18],[22,60],[24,24],[30,34],[32,32],[10,10]]) {
+ const frame=frames[`${width}x${length}`],span=width*.3048-7.5*.0254,rise=span/2*frame.pitch;
+ for(const style of frame.allowedTrusses) {
+  const root=object(model[style==='king'?'KingTruss':style==='arch'?'RuntimeArchTruss':'RuntimeHammerTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,memberHeightIn:frame.rafterIn[1],plates:false}));
+  root.traverse(mesh=>{if(mesh.isMesh)for(const v of mesh.geometry.attributes.position.array)if(!Number.isFinite(v))throw Error(`Invalid ${style} ${width} geometry`)});
+  // Plated variants must stay inside the roof envelope at every new pitch.
+  const plated=object(model[style==='king'?'KingTruss':style==='arch'?'RuntimeArchTruss':'RuntimeHammerTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,memberHeightIn:frame.rafterIn[1],plates:true,parametricPlates:true,isOuter:true,peakPlateFace:1}));
+  plated.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(plated);
+  if(bounds.max.y>rise+frame.rafterIn[1]*.0254/Math.cos(Math.atan(frame.pitch))/2+.03)throw Error(`Plate above roof: ${style} ${width}`);
+  await render(root,`public/truss-icons/${style}-${width}${width===10&&length===10?'-6':''}.png`);
+ }
+}
+if(!expandedOnly) {
 const roof=new THREE.Group();const slab=new THREE.Mesh(new THREE.BoxGeometry(1.4,.05,1.5),new THREE.MeshStandardMaterial({color:'#64716d'}));roof.add(slab);
 roof.add(object(model.SeamRidges({slopeLen:1.4,panelDepth:1.5,color:'#64716d'})));
 roof.add(object(model.SnowGuards({slopeLen:1.4,panelDepth:1.5,color:'#64716d'})));
 mkdirSync('public/roof-details',{recursive:true});await render(roof,'public/roof-details/snow-guards.png',true);
+
+}

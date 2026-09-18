@@ -1,4 +1,119 @@
 {
+  "10x10": {
+    "width": 10,
+    "length": 10,
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 1,
+    "braces": 8,
+    "pitch": 0.5,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "trussIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 6,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king"
+    ],
+    "runtimeTruss": true,
+    "packageNote": "Pre-built pavilion \u00b7 6/12 roof"
+  },
+  "10x14": {
+    "width": 10,
+    "length": 14,
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "trussIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 8,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "10x24": {
+    "width": 10,
+    "length": 24,
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 5,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "trussIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 8,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
   "12x12": {
     "width": 12,
     "length": 12,
@@ -19,11 +134,24 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 8
+    "collarStockFt": 8,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "12x14": {
     "width": 12,
@@ -45,11 +173,24 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 8
+    "collarStockFt": 8,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "12x40": {
     "width": 12,
@@ -71,11 +212,24 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 8
+    "collarStockFt": 8,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "14x26": {
     "width": 14,
@@ -97,11 +251,24 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 10
+    "collarStockFt": 10,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "16x16": {
     "width": 16,
@@ -123,11 +290,24 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 10
+    "collarStockFt": 10,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "16x32": {
     "width": 16,
@@ -149,11 +329,24 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 10
+    "collarStockFt": 10,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "16x40": {
     "width": 16,
@@ -175,11 +368,178 @@
       6,
       6
     ],
+    "trussIn": [
+      6,
+      6
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 10
+    "collarStockFt": 10,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
+  },
+  "18x18": {
+    "width": 18,
+    "length": 18,
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      10
+    ],
+    "ridgeIn": [
+      6,
+      10
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "18x20": {
+    "width": 18,
+    "length": 20,
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 4,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      10
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 10,
+    "baseHeight": 8,
+    "baseTruss": "hammer",
+    "allowedTrusses": [
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": "Hammerbeam package"
+  },
+  "18x32": {
+    "width": 18,
+    "length": 32,
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      10
+    ],
+    "ridgeIn": [
+      6,
+      10
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "18x36": {
+    "width": 18,
+    "length": 36,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      10
+    ],
+    "ridgeIn": [
+      6,
+      10
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
   },
   "20x30": {
     "width": 20,
@@ -201,11 +561,24 @@
       6,
       8
     ],
+    "trussIn": [
+      6,
+      8
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 14
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
   },
   "20x36": {
     "width": 20,
@@ -227,10 +600,374 @@
       6,
       8
     ],
+    "trussIn": [
+      6,
+      8
+    ],
     "collarIn": [
       6,
       6
     ],
-    "collarStockFt": 14
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": false,
+    "packageNote": ""
+  },
+  "22x60": {
+    "width": 22,
+    "length": 60,
+    "posts": 14,
+    "trusses": 4,
+    "rafterPairs": 12,
+    "braces": 32,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "24x16": {
+    "width": 24,
+    "length": 16,
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "24x24": {
+    "width": 24,
+    "length": 24,
+    "posts": 6,
+    "trusses": 2,
+    "rafterPairs": 5,
+    "braces": 12,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "24x30": {
+    "width": 24,
+    "length": 30,
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "24x32": {
+    "width": 24,
+    "length": 32,
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "24x40": {
+    "width": 24,
+    "length": 40,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 14,
+    "baseHeight": 8,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "30x34": {
+    "width": 30,
+    "length": 34,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 18,
+    "baseHeight": 10,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "30x40": {
+    "width": 30,
+    "length": 40,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "trussIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 18,
+    "baseHeight": 10,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
+  },
+  "32x32": {
+    "width": 32,
+    "length": 32,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 22,
+    "pitch": 0.5,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      10
+    ],
+    "trussIn": [
+      6,
+      10
+    ],
+    "collarIn": [
+      6,
+      8
+    ],
+    "collarStockFt": 18,
+    "baseHeight": 10,
+    "baseTruss": "king",
+    "allowedTrusses": [
+      "king",
+      "arch",
+      "hammer"
+    ],
+    "runtimeTruss": true,
+    "packageNote": ""
   }
 }

@@ -36,10 +36,10 @@ export function ExpandedSizePricing({doc,onSave,saving}:{doc:PricingDoc;onSave:(
  }
  if(!size)return null;
  return <Card><CardHeader><CardTitle>Added sizes — package and option prices</CardTitle></CardHeader><CardContent className="space-y-4">
-  <p className="text-sm">Enter confirmed prices for the added sizes. Blank package prices require a quote and cannot proceed to a deposit.</p>
+  <p className="text-sm">Package prices start from the approved Excel totals. Edit confirmed prices here; blank package prices require a quote and cannot proceed to a deposit.</p>
   <Select value={id} onValueChange={setId}><SelectTrigger aria-label="Size to price"><SelectValue/></SelectTrigger><SelectContent>{sizes.map(s=><SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent></Select>
   {size.dataIssue&&<p className="text-sm text-amber-800">Source review: {size.dataIssue}</p>}
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{fields.map(([group,key,label])=><label key={group+key} className="text-sm">{label}<Input inputMode="decimal" aria-label={`${size.id} ${label}`} value={draft[group+'.'+key]??''} placeholder="To be quoted" disabled={group==='decorativeTrussPlates'&&!!size.decorativeTrussPlates?.included} onChange={e=>setDraft(d=>({...d,[group+'.'+key]:e.target.value}))}/></label>)}</div>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{fields.map(([group,key,label])=><label key={group+key} className="text-sm">{group==='trussStyleUpgrade'&&key===size.baseTrussStyle?'Included base truss':label}<Input inputMode="decimal" aria-label={`${size.id} ${label}`} value={draft[group+'.'+key]??''} placeholder="To be quoted" disabled={(group==='decorativeTrussPlates'&&!!size.decorativeTrussPlates?.included)||(group==='trussStyleUpgrade'&&key===size.baseTrussStyle)} onChange={e=>setDraft(d=>({...d,[group+'.'+key]:e.target.value}))}/></label>)}</div>
   {size.decorativeTrussPlates?.included&&<p className="text-sm">Decorative plates are included in this size’s package price.</p>}
   <Button onClick={save} disabled={saving}>{saving?'Saving…':'Save size prices'}</Button>
  </CardContent></Card>;

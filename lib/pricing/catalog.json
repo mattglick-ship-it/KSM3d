@@ -2,39 +2,23 @@
   "meta": {
     "catalogOnly": false,
     "currency": "USD",
-    "droppedNonCatalogSizes": [
-      "10x10",
-      "10x14",
-      "10x24",
-      "18x18",
-      "18x32",
-      "18x36",
-      "22x60",
-      "24x16",
-      "24x24",
-      "24x30",
-      "24x32",
-      "24x40",
-      "30x34",
-      "30x40",
-      "32x32"
-    ],
+    "droppedNonCatalogSizes": [],
     "generatedAt": "2026-06-19T08:50:26",
     "generatedFrom": "/agent/stored_files/cmqjtg3f50c0n06adfz34fwlx_2026 Pavilion pricing sheets.xlsx",
     "notes": [
       "basePriceByRoof is the official retail price for that size + roof material.",
       "Retail prices already INCLUDE the truss plate package for sizes that have one (20'-wide and up).",
       "options.* are ADD-ONS layered on the base price; fill any TODO (null) values.",
-      "To re-enable non-catalog sizes, set RESTRICT_TO_RETAIL_CATALOG=False in the importer.",
-      "September 18: nine existing-width footprints added from detailed 2026 sheets; unresolved base prices remain absent. Existing prices preserved."
+      "All 25 added footprints use the detailed Excel totals as written, approved September 18. The original 12 catalog rows remain unchanged, including 16x20 Hammer upgrade pricing."
     ],
     "openTodos": [],
-    "priceBasis": "basePriceByRoof = official RETAIL kit price (incl. truss plate package where applicable). Sizes not in the retail catalog use a provisional cost-derived price (retailVerified=false).",
+    "priceBasis": "Original 12 retail catalog rows preserved; added footprints use the detailed 2026 workbook roof totals as written, approved September 18.",
     "product": "Pavilion",
     "retailSource": "/agent/stored_files/cmqjw1h3u0dkr08adgjwxh83l_2026 KSM Pavilions Pricing.xlsx",
-    "retailVerifiedCount": 12,
+    "retailVerifiedCount": 37,
     "schemaVersion": "1.1",
-    "sizeCount": 21
+    "sizeCount": 37,
+    "workbookPricingRevision": "2026-09-18-as-written-v1"
   },
   "options": {
     "decorativeTrussPlates": {
@@ -263,6 +247,147 @@
   ],
   "sizes": [
     {
+      "id": "10x10",
+      "label": "10' \u00d7 10'",
+      "width": 10,
+      "length": 10,
+      "posts": 4,
+      "trusses": 2,
+      "rafters": 2,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "6/12",
+      "timberLinearFt": 146,
+      "timberBoardFt": 565.33,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 37.2,
+        "10": 74.4
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": false,
+        "upcharge": null
+      },
+      "basePriceByRoof": {
+        "shingles": 4633.77,
+        "standing_seam": 5810.11,
+        "metal": 4821.21
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "10x10",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F48",
+        "standing_seam": "F59",
+        "metal": "F74"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "10x14",
+      "label": "10' \u00d7 14'",
+      "width": 10,
+      "length": 14,
+      "posts": 4,
+      "trusses": 2,
+      "rafters": 6,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 218,
+      "timberBoardFt": 798.67,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 37.2,
+        "10": 74.4
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": false,
+        "upcharge": null
+      },
+      "basePriceByRoof": {
+        "shingles": 5959.1,
+        "standing_seam": 7329.48,
+        "metal": 6049.52
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "10x14",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F49",
+        "standing_seam": "F60",
+        "metal": "F75"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "10x24",
+      "label": "10' \u00d7 24'",
+      "width": 10,
+      "length": 24,
+      "posts": 6,
+      "trusses": 2,
+      "rafters": 10,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 316,
+      "timberBoardFt": 1182.67,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": false,
+        "upcharge": null
+      },
+      "basePriceByRoof": {
+        "shingles": 8905.89,
+        "standing_seam": 10917.79,
+        "metal": 9058.08
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "10x24",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F48",
+        "standing_seam": "F59",
+        "metal": "F74"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
       "id": "12x12",
       "label": "12' \u00d7 12'",
       "width": 12,
@@ -277,6 +402,7 @@
       "timberBoardFt": 772.0,
       "basePriceByRoof": {
         "shingles": 5880.51,
+        "standing_seam": 6961.81,
         "metal": 5972.91
       },
       "heightPricing": {
@@ -294,12 +420,19 @@
         "included": false,
         "upcharge": null
       },
-      "status": "needs_review",
+      "status": "ok",
       "dataIssue": "Standing-seam markup needs confirmation.",
       "sourceSheet": "12x12",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F48",
+        "standing_seam": "F59",
+        "metal": "F74"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "id": "12x14",
@@ -314,7 +447,11 @@
       "roofSlope": "8/12",
       "timberLinearFt": 246,
       "timberBoardFt": 882.67,
-      "basePriceByRoof": {},
+      "basePriceByRoof": {
+        "shingles": 6675.44,
+        "standing_seam": 8128.98,
+        "metal": 6749.62
+      },
       "heightPricing": {
         "8": 0.0,
         "9": 37.2,
@@ -330,12 +467,19 @@
         "included": false,
         "upcharge": null
       },
-      "status": "needs_review",
+      "status": "ok",
       "dataIssue": "Rafter board footage and standing-seam markup need confirmation.",
       "sourceSheet": "12x14",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F50",
+        "standing_seam": "F61",
+        "metal": "F76"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "basePostFt": 8,
@@ -543,7 +687,14 @@
       "sourceSheet": "12x40",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F48",
+        "standing_seam": "F59",
+        "metal": "F73"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "basePostFt": 8,
@@ -695,7 +846,14 @@
       "sourceSheet": "14x26",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F48",
+        "standing_seam": "F58",
+        "metal": "F72"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "basePostFt": 8,
@@ -766,7 +924,11 @@
       "roofSlope": "8/12",
       "timberLinearFt": 296,
       "timberBoardFt": 1137.33,
-      "basePriceByRoof": {},
+      "basePriceByRoof": {
+        "shingles": 8625.69,
+        "standing_seam": 11070.33,
+        "metal": 8854.45
+      },
       "heightPricing": {
         "8": 0.0,
         "9": 37.2,
@@ -782,12 +944,19 @@
         "included": false,
         "upcharge": null
       },
-      "status": "needs_review",
+      "status": "ok",
       "dataIssue": "Post board footage needs confirmation.",
       "sourceSheet": "16x16",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F48",
+        "standing_seam": "F58",
+        "metal": "F72"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "basePostFt": 8,
@@ -995,7 +1164,14 @@
       "sourceSheet": "16x32",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F50",
+        "standing_seam": "F60",
+        "metal": "F74"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "id": "16x40",
@@ -1010,7 +1186,11 @@
       "roofSlope": "8/12",
       "timberLinearFt": 642,
       "timberBoardFt": 2422.0,
-      "basePriceByRoof": {},
+      "basePriceByRoof": {
+        "shingles": 18962.42,
+        "standing_seam": 24683.3,
+        "metal": 19458.74
+      },
       "heightPricing": {
         "8": 0.0,
         "9": 93.0,
@@ -1026,12 +1206,207 @@
         "included": false,
         "upcharge": null
       },
-      "status": "needs_review",
+      "status": "ok",
       "dataIssue": "Girder board footage needs confirmation.",
       "sourceSheet": "16x40",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F50",
+        "standing_seam": "F60",
+        "metal": "F74"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "18x18",
+      "label": "18' \u00d7 18'",
+      "width": 18,
+      "length": 18,
+      "posts": 6,
+      "trusses": 2,
+      "rafters": 6,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 352,
+      "timberBoardFt": 1554.67,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": false,
+        "upcharge": null
+      },
+      "basePriceByRoof": {
+        "shingles": 11433.64,
+        "standing_seam": 14406.28,
+        "metal": 11660.55
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "18x18",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F49",
+        "standing_seam": "F59",
+        "metal": "F73"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "18x20",
+      "label": "18' \u00d7 20'",
+      "width": 18,
+      "length": 20,
+      "posts": 6,
+      "trusses": 2,
+      "rafters": 8,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 388,
+      "timberBoardFt": 1728.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "hammer": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 16546.44,
+        "standing_seam": 20511.72,
+        "metal": 16792.36
+      },
+      "baseTrussStyle": "hammer",
+      "status": "ok",
+      "dataIssue": "Hammerbeam-only source package; includes the sheet\u2019s grooving labor and totals as supplied.",
+      "sourceSheet": "18x20 (HB)",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "18x32",
+      "label": "18' \u00d7 32'",
+      "width": 18,
+      "length": 32,
+      "posts": 6,
+      "trusses": 3,
+      "rafters": 12,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 584,
+      "timberBoardFt": 2540.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": false,
+        "upcharge": null
+      },
+      "basePriceByRoof": {
+        "shingles": 17522.32,
+        "standing_seam": 22599.04,
+        "metal": 17837.27
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "18x32",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F49",
+        "standing_seam": "F59",
+        "metal": "F73"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "18x36",
+      "label": "18' \u00d7 36'",
+      "width": 18,
+      "length": 36,
+      "posts": 10,
+      "trusses": 3,
+      "rafters": 16,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 712,
+      "timberBoardFt": 3092.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 93.0,
+        "10": 186.0
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": false,
+        "upcharge": null
+      },
+      "basePriceByRoof": {
+        "shingles": 20427.07,
+        "standing_seam": 26095.15,
+        "metal": 20717.99
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "18x36",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F49",
+        "standing_seam": "F59",
+        "metal": "F73"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "basePostFt": 8,
@@ -1214,7 +1589,11 @@
       "roofSlope": "8/12",
       "timberLinearFt": 594,
       "timberBoardFt": 2676.0,
-      "basePriceByRoof": {},
+      "basePriceByRoof": {
+        "shingles": 18270.52,
+        "standing_seam": 23677.24,
+        "metal": 18516.17
+      },
       "heightPricing": {
         "8": 0.0,
         "9": 55.8,
@@ -1230,12 +1609,19 @@
         "included": true,
         "upcharge": 0
       },
-      "status": "needs_review",
+      "status": "ok",
       "dataIssue": "Listed plates and lags are omitted from the source total.",
       "sourceSheet": "20x30",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F52",
+        "standing_seam": "F62",
+        "metal": "F76"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     },
     {
       "id": "20x36",
@@ -1250,7 +1636,11 @@
       "roofSlope": "8/12",
       "timberLinearFt": 730,
       "timberBoardFt": 3200.0,
-      "basePriceByRoof": {},
+      "basePriceByRoof": {
+        "shingles": 22085.01,
+        "standing_seam": 28505.49,
+        "metal": 22433.22
+      },
       "heightPricing": {
         "8": 0.0,
         "9": 93.0,
@@ -1266,12 +1656,436 @@
         "included": true,
         "upcharge": 0
       },
-      "status": "needs_review",
+      "status": "ok",
       "dataIssue": "Listed plates and lags are omitted from the source total.",
       "sourceSheet": "20x36",
       "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
       "expansionBatch": "2026-09-18",
-      "retailVerified": false
+      "retailVerified": true,
+      "baseTrussStyle": "king",
+      "sourceCells": {
+        "shingles": "F50",
+        "standing_seam": "F61",
+        "metal": "F75"
+      },
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "22x60",
+      "label": "22' \u00d7 60'",
+      "width": 22,
+      "length": 60,
+      "posts": 14,
+      "trusses": 4,
+      "rafters": 24,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 1144,
+      "timberBoardFt": 5357.33,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 130.2,
+        "10": 260.4
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 41177.22,
+        "standing_seam": 52370.82,
+        "metal": 41777.3
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": "Custom source package; displayed with its listed 14 posts and 4 trusses.",
+      "sourceSheet": "22x60",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "24x16",
+      "label": "24' \u00d7 16'",
+      "width": 24,
+      "length": 16,
+      "posts": 6,
+      "trusses": 2,
+      "rafters": 6,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 394,
+      "timberBoardFt": 1774.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 15513.34,
+        "standing_seam": 24861.58,
+        "metal": 15776.55
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "24x16",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F51",
+        "standing_seam": "F61",
+        "metal": "F75"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "24x24",
+      "label": "24' \u00d7 24'",
+      "width": 24,
+      "length": 24,
+      "posts": 6,
+      "trusses": 2,
+      "rafters": 10,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 514,
+      "timberBoardFt": 2392.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 19064.36,
+        "standing_seam": 24479.0,
+        "metal": 19349.09
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "24x24",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "24x30",
+      "label": "24' \u00d7 30'",
+      "width": 24,
+      "length": 30,
+      "posts": 6,
+      "trusses": 3,
+      "rafters": 12,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 654,
+      "timberBoardFt": 3000.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 24745.97,
+        "standing_seam": 31216.61,
+        "metal": 25069.37
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "24x30",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "24x32",
+      "label": "24' \u00d7 32'",
+      "width": 24,
+      "length": 32,
+      "posts": 6,
+      "trusses": 3,
+      "rafters": 12,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 662,
+      "timberBoardFt": 3064.0,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 55.8,
+        "10": 111.6
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 25127.72,
+        "standing_seam": 31598.36,
+        "metal": 25451.12
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "24x32",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "24x40",
+      "label": "24' \u00d7 40'",
+      "width": 24,
+      "length": 40,
+      "posts": 10,
+      "trusses": 3,
+      "rafters": 16,
+      "basePostFt": 8,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 810,
+      "timberBoardFt": 3778.67,
+      "heightPricing": {
+        "8": 0.0,
+        "9": 93.0,
+        "10": 186.0
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 30453.08,
+        "standing_seam": 38935.4,
+        "metal": 30994.41
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "24x40",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "30x34",
+      "label": "30' \u00d7 34'",
+      "width": 30,
+      "length": 34,
+      "posts": 10,
+      "trusses": 3,
+      "rafters": 12,
+      "basePostFt": 10,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 862,
+      "timberBoardFt": 3941.33,
+      "heightPricing": {
+        "10": 0.0
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 33399.12,
+        "standing_seam": 42285.36,
+        "metal": 33547.49
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "30x34",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "30x40",
+      "label": "30' \u00d7 40'",
+      "width": 30,
+      "length": 40,
+      "posts": 10,
+      "trusses": 3,
+      "rafters": 12,
+      "basePostFt": 10,
+      "postSize": "8x8",
+      "roofSlope": "8/12",
+      "timberLinearFt": 862,
+      "timberBoardFt": 3941.33,
+      "heightPricing": {
+        "10": 0.0
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 33399.12,
+        "standing_seam": 42285.36,
+        "metal": 33547.49
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": "The 30x40 tab duplicates 30x34, including its header and material takeoff. Prices retained exactly as supplied; 40-foot placement is a preview assumption.",
+      "sourceSheet": "30x40",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F53",
+        "standing_seam": "F63",
+        "metal": "F77"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
+    },
+    {
+      "id": "32x32",
+      "label": "32' \u00d7 32'",
+      "width": 32,
+      "length": 32,
+      "posts": 10,
+      "trusses": 3,
+      "rafters": 12,
+      "basePostFt": 10,
+      "postSize": "8x8",
+      "roofSlope": "6/12",
+      "timberLinearFt": 840,
+      "timberBoardFt": 4301.33,
+      "heightPricing": {
+        "10": 0.0
+      },
+      "trussStyleUpgrade": {
+        "king": 0
+      },
+      "rafterTailUpgrade": {
+        "standard": 0
+      },
+      "decorativeTrussPlates": {
+        "included": true,
+        "upcharge": 0
+      },
+      "basePriceByRoof": {
+        "shingles": 36567.45,
+        "standing_seam": 44946.81,
+        "metal": 36826.7
+      },
+      "baseTrussStyle": "king",
+      "status": "ok",
+      "dataIssue": null,
+      "sourceSheet": "32x32",
+      "sourceWorkbook": "2026 Pavilion pricing sheets.xlsx",
+      "sourceCells": {
+        "shingles": "F52",
+        "standing_seam": "F62",
+        "metal": "F76"
+      },
+      "expansionBatch": "2026-09-18",
+      "retailVerified": true,
+      "pricingBasis": "User approved workbook totals as written on 2026-09-18; no formula corrections."
     }
   ]
 }
