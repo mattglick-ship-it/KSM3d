@@ -4,12 +4,12 @@
 // (X = span, Y = vertical, Z = thickness). The loader scales to meters
 // and keeps the authored position — no recentering, no auto-fit.
 
-import tieBeamL from "@/assets/hammer20_tie_beam_l.stl.asset.json";
-import tieBeamR from "@/assets/hammer20_tie_beam_r.stl.asset.json";
-import princeL from "@/assets/hammer20_prince_l.stl.asset.json";
-import princeR from "@/assets/hammer20_prince_r.stl.asset.json";
-import topTie from "@/assets/hammer20_top_tie.stl.asset.json";
-import kingpost from "@/assets/hammer20_kingpost.stl.asset.json";
+
+
+
+
+
+
 
 export type Hammer20PieceKey =
   | "tieL" | "tieR"
@@ -21,12 +21,12 @@ export type Hammer20PieceKey =
   | "topTie";
 
 export const HAMMER20_PIECE_STLS: Partial<Record<Hammer20PieceKey, string>> = {
-  tieL: tieBeamL.url,
-  tieR: tieBeamR.url,
-  princeL: princeL.url,
-  princeR: princeR.url,
-  topTie: topTie.url,
-  kingpost: kingpost.url,
+  tieL: "hammer20_tie_beam_l",
+  tieR: "hammer20_tie_beam_r",
+  princeL: "hammer20_prince_l",
+  princeR: "hammer20_prince_r",
+  topTie: "hammer20_top_tie",
+  kingpost: "hammer20_kingpost",
 };
 
 /** Extra pieces (no splitter bucket) that should be rendered as additions

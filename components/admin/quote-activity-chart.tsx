@@ -1,0 +1,6 @@
+"use client";
+import {ResponsiveContainer,BarChart,Bar,XAxis,YAxis,Tooltip,CartesianGrid} from 'recharts';
+import type {QuoteActivity} from './quote-activity';
+export function QuoteActivityChart({activity}:{activity:QuoteActivity|null}){
+ return <section className="quote-activity"><h2>Quote requests · last 30 days</h2>{activity?<><p>{activity.last30} {activity.last30===1?'request':'requests'} · through today</p><div className="quote-activity-plot"><ResponsiveContainer width="100%" height="100%"><BarChart data={activity.days} accessibilityLayer margin={{top:12,right:12,bottom:4,left:-20}}><CartesianGrid vertical={false} stroke="#e4e9e5"/><XAxis dataKey="label" minTickGap={28} tick={{fontSize:12}} axisLine={false} tickLine={false}/><YAxis allowDecimals={false} tick={{fontSize:12}} axisLine={false} tickLine={false}/><Tooltip cursor={{fill:'#edf2ef'}}/><Bar dataKey="count" name="Quote requests" fill="#285442" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div><details><summary>View daily counts</summary><table><thead><tr><th>Date</th><th>Quotes</th></tr></thead><tbody>{activity.days.map(day=><tr key={day.start}><td>{day.label}</td><td>{day.count}</td></tr>)}</tbody></table></details></>:<p role="status">Activity has not loaded. Use Refresh to try again.</p>}</section>;
+}

@@ -35,7 +35,7 @@ export function computeQuote(sel: Selection, data: PricingDoc): Quote {
   // 1. BASE
   const base = size.basePriceByRoof[sel.roof];
   if (base == null) {
-    callForPricing.push(`Base price (${sel.roof})`);
+    callForPricing.push(`Base price (${sel.roof.replace("_", " ")})`);
   } else {
     lines.push({ label: `Base — ${size.label} / ${sel.roof.replace("_", " ")}`, amount: base });
   }

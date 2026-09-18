@@ -16,7 +16,15 @@ checkBox(new T.BoxGeometry(.18,4,.18),new T.Vector3(0,1,0));
 checkBox(new T.BoxGeometry(.18,.18,4),new T.Vector3(0,0,1));
 checkBox(new T.BoxGeometry(4,.18,.18).rotateZ(Math.PI/5),new T.Vector3(Math.cos(Math.PI/5),Math.sin(Math.PI/5),0));
 checkBox(new T.BoxGeometry(4,.18,.18).scale(-1,1,1),new T.Vector3(1,0,0),new T.Vector3(1.5,1,1));
-(async()=>{const {GLTFLoader}=await import('three/examples/jsm/loaders/GLTFLoader.js');for(const w of [12,14,16,20]){
- const b=fs.readFileSync(`public/models/hammer${w}_truss.glb`),loader=new GLTFLoader();loader.register(()=>({name:'NO_TEXTURES',loadTexture:()=>Promise.resolve(null)}));const gltf=await loader.parseAsync(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'');gltf.scene.traverse(mesh=>{if(!mesh.isMesh)return;const g=mapTimberGrain(mesh.geometry);assert(g.userData.timberAxes.length>=9,'imported truss needs independent timber directions');for(const v of g.attributes.uv.array)assert(Number.isFinite(v));g.dispose()});}
- console.log('Timber grain passed: all four faces on X/Y/Z, diagonal and mirrored timbers; scale, end grain, source isolation, all four imported hammer trusses.');
-})().catch(e=>{console.error(e);process.exitCode=1});
+const stock=new T.BoxGeometry(.18,3,.18),first=mapTimberGrain(stock,new T.Vector3(1,1,1),1),second=mapTimberGrain(stock,new T.Vector3(1,1,1),2);
+assert.notEqual(first.attributes.timberSeed.getX(0),second.attributes.timberSeed.getX(0),'different timbers need subtle material variation');
+assert.equal(new Set(first.attributes.timberSeed.array).size,1,'all faces of one timber share its variation');
+stock.dispose();first.dispose();second.dispose();
+require('./load-typescript.cjs');
+const {createHammerMembers}=require('../components/pavilion/procedural-geometry.ts');
+for(const w of [12,14,16,20]) {
+ let axes=0;
+ for(const p of createHammerMembers(w)){const g=mapTimberGrain(p.geometry);axes+=g.userData.timberAxes.length;for(const v of g.attributes.uv.array)assert(Number.isFinite(v));g.dispose();p.geometry.dispose();}
+ assert(axes>=10,'each procedural hammer timber needs its own grain direction');
+}
+console.log('Timber grain passed: all four faces, X/Y/Z, diagonal, mirrored, scale, end grain, and all four procedural hammer trusses.');

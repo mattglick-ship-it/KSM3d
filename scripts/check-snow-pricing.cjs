@@ -1,6 +1,6 @@
 // Offline checks: no customer, email, database, or payment requests.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),ts=require('typescript');
-function load(file){const module={exports:{}};const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;new Function('require','module','exports',js)(name=>name.startsWith('@/')?load(path.resolve(name.slice(2)+'.ts')):name.startsWith('.')?load(path.resolve(path.dirname(file),name+'.ts')):require(name),module,module.exports);return module.exports}
+function load(file){const module={exports:{}};const js=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;new Function('require','module','exports',js)(name=>name.endsWith('.json')?require(path.resolve(path.dirname(file),name)):name.startsWith('@/')?load(path.resolve(name.slice(2)+'.ts')):name.startsWith('.')?load(path.resolve(path.dirname(file),name+'.ts')):require(name),module,module.exports);return module.exports}
 const {computeQuote,selectionFromConfig,snowOptionQuote,fmtUSD}=load(path.resolve('lib/pricing/engine.ts'));
 const {DEFAULT_CONFIG,ROOF_MATERIALS}=load(path.resolve('lib/pavilion-config.ts'));
 const {snowGuardPositions,snowQuantities,snowRoofLength}=load(path.resolve('lib/snow-retention.ts'));

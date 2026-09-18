@@ -1,11 +1,12 @@
 import {supabase} from '@/lib/supabase';
 import seed from './catalog.json';
 import type {PricingDoc} from './types';
+import {withExpandedSizes} from './with-expanded-sizes';
 export const SEED_DOC=seed as unknown as PricingDoc;
 export async function loadPricing():Promise<PricingDoc>{
  const {data,error}=await supabase().from('ksm_pavilion_settings').select('data').eq('id','pricing').maybeSingle();
  if(error)throw error;
- return data?.data??SEED_DOC;
+ return withExpandedSizes(data?.data??SEED_DOC);
 }
 export async function savePricing(doc:PricingDoc){
  if(!doc?.sizes?.length||!doc.options)throw new Error('A pricing catalog must contain sizes and options.');

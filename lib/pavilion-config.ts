@@ -1,3 +1,4 @@
+import {EXPANDED_FRAMES,expandedFrame} from './pavilion-layout';
 export type RoofStyle = "gable" | "hip" | "flat";
 export type PostStyle = "square" | "brace";
 export type TrussStyle = "none" | "arch" | "hammer" | "king";
@@ -179,6 +180,7 @@ export const DEFAULT_CONFIG: PavilionConfig = {
 
 /** Kit price sheet: [width, length] → { shingle, metal, standing-seam }. */
 export const PAVILION_SIZES: { width: number; length: number }[] = [
+  ...Object.values(EXPANDED_FRAMES).map(({width,length}) => ({width,length})),
   { width: 12, length: 16 },
   { width: 12, length: 20 },
   { width: 12, length: 24 },
@@ -208,6 +210,7 @@ export const PAVILION_SIZES: { width: number; length: number }[] = [
   { width: 32, length: 40 },
 ];
 
+export const CUSTOMER_PAVILION_SIZES = PAVILION_SIZES.filter(s => s.width < 24).sort((a,b) => a.width-b.width || a.length-b.length);
 /** Widths for which we don't yet have a retail kit price — show "Call for quote". */
 export const CALL_FOR_QUOTE_WIDTHS = new Set<number>([24, 28, 32]);
 export function isCallForQuote(width: number, _length: number): boolean {
@@ -270,24 +273,26 @@ export type LinealFeetBreakdown = {
  * gable/eave faceboard. "Deckboards" is derived from sloped roof area using
  * 2x6 boards at 5.25" coverage.
  *
- * Assumes a 4:12 pitch on gable/hip and a 1 ft overhang on all sides.
+ * Legacy sizes retain their original estimate basis. Added sizes use their
+ * reviewed post/truss/rafter counts, 8:12 pitch and selected gable overhang.
  */
 export function computeLinealFeet(c: PavilionConfig): LinealFeetBreakdown {
+  const frame = expandedFrame(c.width, c.length);
   const W = c.width;
   const L = c.length;
   const H = c.height;
-  const pitchRise = c.roof === "flat" ? 0 : 4;
+  const pitchRise = c.roof === "flat" ? 0 : frame ? 8 : 4;
   const slope = Math.sqrt(1 + (pitchRise / 12) ** 2); // ≈1.054 for 4:12
   const overhang = 1; // ft each side
 
   // Posts: 4 corners × height
-  const posts = 4 * H;
+  const posts = (frame?.posts ?? 4) * H;
 
   // Perimeter top beams (2 long + 2 short)
-  const perimeterBeams = 2 * (W + L);
+  const perimeterBeams = frame ? 2 * (L + 28 / 12) + L + frame.rafterPairs * frame.collarStockFt : 2 * (W + L);
 
   // Trusses: end trusses + interior every ~10 ft
-  const trussCount = c.truss === "none" ? 0 : Math.max(2, Math.ceil(L / 10) + 1);
+  const trussCount = c.truss === "none" ? 0 : frame ? frame.trusses - (c.hideBackTruss ? 1 : 0) : Math.max(2, Math.ceil(L / 10) + 1);
   const rise = (W / 2) * (pitchRise / 12);
   const topChord = (W / 2) * slope;
   let perTrussLf = 0;
@@ -304,12 +309,12 @@ export function computeLinealFeet(c: PavilionConfig): LinealFeetBreakdown {
   const trusses = trussCount * perTrussLf;
 
   // Rafter pairs spaced ~24" along the length
-  const rafterPairs = Math.max(2, Math.floor(L / 2) + 1);
+  const rafterPairs = frame?.rafterPairs ?? Math.max(2, Math.floor(L / 2) + 1);
   const rafterLen = (W / 2) * slope + overhang;
   const rafters = 2 * rafterPairs * rafterLen;
 
   // Arched corner braces (4 corners × 2 legs × ~3 ft)
-  const arches = c.post === "brace" ? 4 * 2 * 3 : 0;
+  const arches = c.post === "brace" ? (frame?.braces ?? 8) * 3 : 0;
 
   // Faceboard: rake fascia along gable ends (if enabled) + eave fascia both sides
   const rakeLen = (W / 2) * slope + overhang;
@@ -320,7 +325,7 @@ export function computeLinealFeet(c: PavilionConfig): LinealFeetBreakdown {
 
   // Deckboards: sloped roof area × (12 / 5.25) lf per sqft
   const widthWithOverhang = W + 2 * overhang;
-  const lengthWithOverhang = L + 2 * overhang;
+  const lengthWithOverhang = frame ? L + (c.gableOverhang ? 3 : 0) : L + 2 * overhang;
   const roofArea =
     c.roof === "flat"
       ? widthWithOverhang * lengthWithOverhang
@@ -342,5 +347,3 @@ export function computeLinealFeet(c: PavilionConfig): LinealFeetBreakdown {
 function round1(n: number) {
   return Math.round(n * 10) / 10;
 }
-
-

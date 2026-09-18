@@ -1,4 +1,5 @@
 import { DEFAULT_SNOW_RATES, type SnowRates } from '@/lib/snow-retention';
+import {ExpandedSizePricing} from './ExpandedSizePricing';
 import { useEffect, useMemo, useRef, useState } from "react";
 // xlsx imported dynamically inside handleFile to avoid SSR bundling issues
 import { loadPricing, savePricing, SEED_DOC } from "@/lib/pricing/store";
@@ -131,6 +132,7 @@ function AdminPanel() {
           </CardContent>
         </Card>
 
+        <ExpandedSizePricing doc={doc} onSave={persist} saving={saving} />
         <ManualUpcharges doc={doc} onSave={persist} saving={saving} />
 
         <Card>

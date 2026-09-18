@@ -1,6 +1,6 @@
 # KSM Timber Pavilion Designer
 
-Standalone KSM pavilion configurator using the original Lovable pavilion models and a TSI-style customer workflow.
+Standalone KSM pavilion configurator using procedural Three.js geometry rebuilt to the measured pavilion dimensions and a TSI-style customer workflow.
 
 ## Local development
 
@@ -32,3 +32,9 @@ Open `/admin` and sign in with the existing Supabase administrator account. Memb
 The server requires the secret `KSM_COMMERCE_SERVICE_KEY`. It is configured in the standalone hosting environment, never in browser code. The deployed `ksm-pavilion-commerce` Edge Function stores quotes in the connected Supabase project and calls KSM's existing delivery, quote email and Square services. The original payment provider settings remain authoritative. Checkout charges the original fixed $2,500 deposit; the pavilion estimate is not charged in full. To rotate the gateway key, update its SHA-256 hash in the function and the matching hosting secret together.
 
 Run `node tests/commerce.cjs` for offline commerce, pricing-height, share-link and PDF checks. The tests mock external services and do not send emails or create orders. Actual email delivery and completed Square payment still require an end-to-end acceptance check. WebGL2 is required for 3D rendering.
+
+## Procedural models
+
+All pavilion parts, hammer trusses, furniture and grill geometry are generated in code. No GLB, glTF, STL or OBJ assets are loaded or shipped. `components/pavilion/procedural-geometry.ts` builds new solids from editable dimensioned profiles and member locations; `procedural-furniture.ts` builds the scale furniture. Existing calculated posts, roof panels, rafters and King Truss geometry remain procedural.
+
+Run `node scripts/check-procedural-models.cjs` to verify part dimensions, hammer member locations, furniture envelopes, finite attributes and the model-loader prohibition. `node scripts/render-truss-icons.mjs` regenerates option previews from the actual geometry. Legacy settings names containing `Glb` are retained solely for compatibility with saved administrator settings.

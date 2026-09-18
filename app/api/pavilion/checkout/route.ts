@@ -5,6 +5,7 @@ import {ksmService} from '@/lib/ksm-service.server';
 export async function POST(request:Request){try{
  const {design,customer,projectName,submissionId}=quoteRequestSchema.parse(await readCommerceRequest(request));
  const summary=pavilionSummary(design,projectName,await loadPricing());
+ if(summary.pending.some(label=>label.startsWith('Base price')))return Response.json({error:'KSM needs to confirm this pavilion price before a deposit can be taken.'},{status:400});
  const returnUrl=new URL('/?checkout=return',request.url).toString();
  const result=await ksmService('square-checkout',{items:[{inventoryItemId:`pavilion-downpayment-${submissionId}`,name:`Pavilion Down Payment — ${summary.model}`,sku:'PAVILION-DEPOSIT-2500',variantLabel:customer.email,quantity:1,unitPrice:DEPOSIT}],taxExempt:true,returnUrl,notes:`Pavilion quote ${submissionId}. ${summary.size}; ${summary.postHeight} posts; ${summary.timberFinish}; ${summary.roofMaterial}.`,shipping:{method:customer.fulfillment,address:customer.fulfillment==='delivery'?customer.address:undefined},customer:{name:customer.name,email:customer.email,phone:customer.phone,address:customer.fulfillment==='delivery'?customer.address:undefined}});
  const checkoutUrl=result.url||result.checkoutUrl;

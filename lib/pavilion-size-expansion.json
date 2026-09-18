@@ -1,0 +1,236 @@
+{
+  "12x12": {
+    "width": 12,
+    "length": 12,
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 2,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 8
+  },
+  "12x14": {
+    "width": 12,
+    "length": 14,
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 8
+  },
+  "12x40": {
+    "width": 12,
+    "length": 40,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 8
+  },
+  "14x26": {
+    "width": 14,
+    "length": 26,
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 4,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      8
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 10
+  },
+  "16x16": {
+    "width": 16,
+    "length": 16,
+    "posts": 4,
+    "trusses": 2,
+    "rafterPairs": 3,
+    "braces": 8,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 10
+  },
+  "16x32": {
+    "width": 16,
+    "length": 32,
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 10
+  },
+  "16x40": {
+    "width": 16,
+    "length": 40,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 22,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      10
+    ],
+    "ridgeIn": [
+      4,
+      8
+    ],
+    "rafterIn": [
+      6,
+      6
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 10
+  },
+  "20x30": {
+    "width": 20,
+    "length": 30,
+    "posts": 6,
+    "trusses": 3,
+    "rafterPairs": 6,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      12
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 14
+  },
+  "20x36": {
+    "width": 20,
+    "length": 36,
+    "posts": 10,
+    "trusses": 3,
+    "rafterPairs": 8,
+    "braces": 14,
+    "pitch": 0.6666666666666666,
+    "girderIn": [
+      8,
+      10
+    ],
+    "ridgeIn": [
+      6,
+      12
+    ],
+    "rafterIn": [
+      6,
+      8
+    ],
+    "collarIn": [
+      6,
+      6
+    ],
+    "collarStockFt": 14
+  }
+}

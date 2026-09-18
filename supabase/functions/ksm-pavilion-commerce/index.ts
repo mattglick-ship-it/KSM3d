@@ -20,18 +20,19 @@ Deno.serve(async req=>{
   if(name==='calculate-shipping')return json(await upstream(name,{address:body.address}));
   if(name==='capture-pavilion-lead'){
    const c=body.config,id=body.submissionId;
+   const sendCopyToCustomer=c?.emailCopyRequested!==false;
    if(!/^[0-9a-f-]{36}$/i.test(id)||!c?.design||!c?.summary||typeof body.email!=='string')return json({error:'Invalid quote'},400);
-   const {data:existing,error:readError}=await db.from('ksm_pavilion_quotes').select('service_status').eq('id',id).maybeSingle();if(readError)throw readError;
-   if(existing)return json({success:true,reference:id,emailStatus:existing.service_status==='accepted'?'requested':'unconfirmed'});
-   const {error:insertError}=await db.from('ksm_pavilion_quotes').insert({id,project_name:c.summary.projectName,customer:{name:body.name,email:body.email,phone:body.phone,address:c.deliveryAddress??'',notes:c.notes??'',fulfillment:c.fulfillment},design:c.design,summary:c.summary,delivery:c.delivery??null,service_status:'pending',email_status:'pending'});
+   const {data:existing,error:readError}=await db.from('ksm_pavilion_quotes').select('service_status,email_status').eq('id',id).maybeSingle();if(readError)throw readError;
+   if(existing)return json({success:true,reference:id,emailStatus:existing.email_status});
+   const {error:insertError}=await db.from('ksm_pavilion_quotes').insert({id,project_name:c.summary.projectName,customer:{name:body.name,email:body.email,phone:body.phone,address:c.deliveryAddress??'',notes:c.notes??'',fulfillment:c.fulfillment,sendCopyToCustomer},design:c.design,summary:c.summary,delivery:c.delivery??null,service_status:'pending',email_status:sendCopyToCustomer?'pending':'not_requested'});
    if(insertError){if(insertError.code==='23505')return json({success:true,reference:id,emailStatus:'unconfirmed'});throw insertError}
    try{
     const result=await upstream(name,body);if(result.success!==true)throw new Error('Quote receipt unconfirmed');
-    await db.from('ksm_pavilion_quotes').update({service_status:'accepted',email_status:'requested',updated_at:new Date().toISOString()}).eq('id',id);
-    return json({success:true,reference:id,emailStatus:'requested'});
+    await db.from('ksm_pavilion_quotes').update({service_status:'accepted',email_status:sendCopyToCustomer?'requested':'not_requested',updated_at:new Date().toISOString()}).eq('id',id);
+    return json({success:true,reference:id,emailStatus:sendCopyToCustomer?'requested':'not_requested'});
    }catch{
-    await db.from('ksm_pavilion_quotes').update({service_status:'uncertain',email_status:'unconfirmed',updated_at:new Date().toISOString()}).eq('id',id);
-    return json({success:true,reference:id,emailStatus:'unconfirmed',notice:'Your quote is saved. Email confirmation is pending; KSM can follow up from the quote dashboard.'});
+    await db.from('ksm_pavilion_quotes').update({service_status:'uncertain',email_status:sendCopyToCustomer?'unconfirmed':'not_requested',updated_at:new Date().toISOString()}).eq('id',id);
+    return json({success:true,reference:id,emailStatus:sendCopyToCustomer?'unconfirmed':'not_requested',notice:'Your quote is saved with KSM. We’ll follow up with you.'});
    }
   }
   if(name==='square-checkout'){

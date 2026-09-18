@@ -137,3 +137,5 @@ body {
 }
 
 @theme inline { --color-brand: #19332c; --color-brand-foreground: #ffffff; --color-ink: #19332c; --color-canvas: #f3f5f2; --color-ui-border: #dce1dc; --font-display: DDC, Arial, sans-serif; }
+
+.furniture-item{border-bottom:1px solid var(--border,#dce2dc);padding-bottom:10px;margin-bottom:10px}.placement-controls{display:grid;gap:14px;padding:2px 0 14px}.placement-controls>label{font-size:14px;font-weight:500;display:block}.placement-controls output{float:right;font-variant-numeric:tabular-nums;color:#52675d}.placement-controls input[type=range]{display:block;width:100%;margin:10px 0 0;accent-color:#285442;height:22px}.placement-controls button{justify-self:start}

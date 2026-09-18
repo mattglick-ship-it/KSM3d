@@ -1,3 +1,4 @@
+import {pavilionCameraPosition} from './camera-fit';
 import {TimberGrainMapping} from './TimberGrainMapping';
 import {Dimensions} from "./dimensions";
 import { Canvas, useLoader, useFrame, useThree } from "@react-three/fiber";
@@ -5,10 +6,10 @@ import { OrbitControls, ContactShadows, Environment } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { PavilionConfig } from "@/lib/pavilion-config";
 import { Pavilion, type GrainAdjust, type GrainPieceAdjust, type GrainFaceAdjust, type RakeTrimAdjust, type BackRakeRotation, type TrussPlateExtraOffsets, type HandPeeledRandom } from "./Pavilion3D";
-import type { Hammer12GlbAdjust } from "./Hammer12GlbTruss";
-import type { Hammer14GlbAdjust } from "./Hammer14GlbTruss";
-import type { Hammer16GlbAdjust } from "./Hammer16GlbTruss";
-import type { Hammer20GlbAdjust } from "./Hammer20GlbTruss";
+import type { Hammer12Adjust } from "./Hammer12Truss";
+import type { Hammer14Adjust } from "./Hammer14Truss";
+import type { Hammer16Adjust } from "./Hammer16Truss";
+import type { Hammer20Adjust } from "./Hammer20Truss";
 import { PicnicTable } from "./PicnicTable";
 import { Sectional } from "./Sectional";
 import { GreenEgg } from "./GreenEgg";
@@ -47,16 +48,18 @@ function PadMesh({ width, length, thickness, tileScale = 1 }: { width: number; l
 export type ViewPreset = "3d" | "top" | "side" | "under";
 
 // Fixed afternoon sun: highlights and shadows remain anchored as you orbit.
-function BackSun() {
-  return <directionalLight position={[-12, 9, 8]} intensity={2.1} color="#fff5e5" castShadow
+function BackSun({width,length}:{width:number;length:number}) {
+  const extent = Math.max(width, length) * 0.3048 * 0.75 + 2;
+  return <directionalLight position={[-12, 9, 8]} intensity={1.85} color="#fff7ec" castShadow
     shadow-mapSize-width={2048} shadow-mapSize-height={2048}
-    shadow-camera-left={-13} shadow-camera-right={13}
-    shadow-camera-top={13} shadow-camera-bottom={-13}
+    shadow-camera-left={-extent} shadow-camera-right={extent}
+    shadow-camera-top={extent} shadow-camera-bottom={-extent}
     shadow-camera-near={1} shadow-camera-far={65}
-    shadow-normalBias={0.006} shadow-bias={-0.00015} shadow-radius={3} />;
+    shadow-normalBias={0.0025} shadow-bias={-0.00008} shadow-radius={2.4} />;
 }
 
-function CameraRig({ view, allowUnderside, measureEnabled = false }: { view: ViewPreset; allowUnderside: boolean; measureEnabled?: boolean }) {
+function CameraRig({ view, config, allowUnderside, measureEnabled = false }: { view: ViewPreset; config:PavilionConfig; allowUnderside: boolean; measureEnabled?: boolean }) {
+  const {size,camera}=useThree();
   const controls = useRef<any>(null);
   const isCustomer = !allowUnderside;
   // Keep both orbiting and panning above the ground, including under-roof mode.
@@ -73,21 +76,16 @@ function CameraRig({ view, allowUnderside, measureEnabled = false }: { view: Vie
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
-    if (view === "top") {
-      c.object.position.set(0, 18, 0.01);
-    } else if (view === "side") {
-      c.object.position.set(15, 4, 0);
-    } else if (view === "under") {
+    if (view === "under") {
       c.object.position.set(0.01, 0.6, 0.01);
       c.target.set(0, 4, 0);
       c.update();
       return;
-    } else {
-      c.object.position.set(10, 6, 12);
     }
+    c.object.position.copy(pavilionCameraPosition(config.width,config.length,config.height,view,size.width/size.height,(camera as THREE.PerspectiveCamera).fov));
     c.target.set(0, 1.5, 0);
     c.update();
-  }, [view]);
+  }, [view,config.width,config.length,config.height,size.width,size.height,camera]);
 
   // In customer view, keep orbit target pinned to the pavilion center every frame
   // so zoom and interaction never drift the orbit pivot.
@@ -110,7 +108,7 @@ function CameraRig({ view, allowUnderside, measureEnabled = false }: { view: Vie
       zoomToCursor={!isCustomer}
       screenSpacePanning={!isCustomer}
       minDistance={0.1}
-      maxDistance={40}
+      maxDistance={100}
       minPolarAngle={0}
       maxPolarAngle={view === "under" ? Math.PI : Math.PI / 2}
       {...(isCustomer ? { target: [0, 1.5, 0] as [number, number, number] } : {})}
@@ -369,10 +367,10 @@ export function Scene({
   hammerPieceOffsets?: Record<string, { x: number; y: number; z: number }>;
   hammerPieceScales?: Record<string, { x: number; y: number; z: number }>;
   hammerUniformProfile55?: boolean;
-  hammer12Glb?: Hammer12GlbAdjust;
-  hammer14Glb?: Hammer14GlbAdjust;
-  hammer16Glb?: Hammer16GlbAdjust;
-  hammer20Glb?: Hammer20GlbAdjust;
+  hammer12Glb?: Hammer12Adjust;
+  hammer14Glb?: Hammer14Adjust;
+  hammer16Glb?: Hammer16Adjust;
+  hammer20Glb?: Hammer20Adjust;
   plateOffset?: { x: number; y: number; z: number };
   plateRotation?: { x: number; y: number; z: number };
   plateSizeScale?: number;
@@ -438,7 +436,7 @@ export function Scene({
   if(!graphicsReady)return <div className="scene-loading" role="status"><h2>3D graphics are unavailable</h2><p>Enable hardware acceleration or open this designer in a browser that supports WebGL 2.</p><p>You can still configure your pavilion and save a quote.</p></div>;
   return (
     <Canvas
-      shadows="soft"
+      shadows={{type: THREE.PCFShadowMap}}
       dpr={[1, 2]}
       style={{ width: "100%", height: "100%", touchAction: "none" }}
       camera={{ position: [10, 6, 12], fov: 40 }}
@@ -447,11 +445,11 @@ export function Scene({
       <Suspense fallback={null}>
         <Environment files="/models/park.hdr" background={showBackyard}
           ground={showBackyard ? {height: 1.8, radius: 80, scale: 120} : false}
-          environmentIntensity={0.55} backgroundIntensity={0.9} />
+          environmentIntensity={0.65} backgroundIntensity={0.9} />
         {!showBackyard && <color attach="background" args={["#e8edef"]}/>}
-        <hemisphereLight args={["#dae9f5", "#a5a58d", 0.35]} />
-        <ambientLight intensity={0.1} color="#fff8ef" />
-        <BackSun />
+        <hemisphereLight args={["#dae9f5", "#b2a28a", 0.25]} />
+        <ambientLight intensity={0.06} color="#fff8ef" />
+        <BackSun width={config.width} length={config.length} />
         {showBackyard ? (
           <mesh rotation={[-Math.PI/2,0,0]} position={[0,0.003,0]} receiveShadow>
             <planeGeometry args={[160,160]}/>
@@ -460,12 +458,12 @@ export function Scene({
         ) : <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[200,200]}/><meshStandardMaterial color="#e4e9e7" roughness={1}/></mesh>}
         {showDimensions && <Dimensions width={config.width} length={config.length} height={config.height} pad={showPad}/>}
         <ContactShadows
-          position={[0, 0.01, 0]}
-          opacity={0.38}
-          scale={25}
-          blur={2.5}
-          far={5}
-          resolution={512}
+          position={[0, (showPad ? padThickness : 0) + 0.004, 0]}
+          opacity={0.34}
+          scale={Math.max(config.width, config.length) * 0.3048 + 3}
+          blur={2.2}
+          far={1.2}
+          resolution={1024}
         />
         {showPad && (
           <PadMesh width={padW} length={padL} thickness={padThickness} tileScale={padTileScale} />
@@ -475,6 +473,7 @@ export function Scene({
         <HeroCaptureRegistrar />
         </group>
         
+        {showTable && <PicnicTable position={[tableOffset.x, showPad ? padThickness : 0, tableOffset.z]} rotation={tableRotation} stain={tableStain} />}
         {showSectional && <Sectional position={[sofaOffset.x, showPad ? padThickness : 0, sofaOffset.z]} rotation={sofaRotation} />}
         {showEgg && <GreenEgg position={[eggOffset.x, showPad ? padThickness : 0, eggOffset.z]} rotation={eggRotation} />}
         {showDining && <DiningTable position={[diningOffset.x, showPad ? padThickness : 0, diningOffset.z]} rotation={diningRotation} />}
@@ -507,7 +506,7 @@ export function Scene({
           return <TvMount position={[innerCornerX, tvY, innerCornerZ]} rotation={rotY} />;
         })()}
 
-        <CameraRig view={view} allowUnderside={allowUnderside} measureEnabled={measureEnabled} />
+        <CameraRig config={config} view={view} allowUnderside={allowUnderside} measureEnabled={measureEnabled} />
         <MeasureTool enabled={measureEnabled} />
       </Suspense>
       <TimberGrainMapping/>

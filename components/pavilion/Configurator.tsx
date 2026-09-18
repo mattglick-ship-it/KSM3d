@@ -2950,10 +2950,10 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
                 </Section>
               )}
               {showHammer && is12Wide && config.truss === "hammer" && (
-                <Section title="12′ Hammer Truss (GLB) — Scale & Position" index="A1.9c">
+                <Section title="12′ Hammer Truss — Scale & Position" index="A1.9c">
                   <p className="mb-2 text-[10px] text-ink/50">
-                    The 12′ wide hammer truss is rendered from an imported GLB
-                    model. Scale is a multiplier on top of an auto-fit to the
+                    The 12′ wide hammer truss is built from dimensioned timber profiles.
+                    Scale is a multiplier on top of an auto-fit to the
                     pavilion span (so 1.00× starts at the correct width).
                   </p>
                   <div className="space-y-2">
@@ -3005,10 +3005,10 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
                 </Section>
               )}
               {showHammer && is14Wide && config.truss === "hammer" && (
-                <Section title="14′ Hammer Truss (GLB) — Scale & Position" index="A1.9d">
+                <Section title="14′ Hammer Truss — Scale & Position" index="A1.9d">
                   <p className="mb-2 text-[10px] text-ink/50">
-                    The 14′ wide hammer truss is rendered from an imported GLB
-                    model. Scale is a multiplier on top of an auto-fit to the
+                    The 14′ wide hammer truss is built from dimensioned timber profiles.
+                    Scale is a multiplier on top of an auto-fit to the
                     pavilion span (so 1.00× starts at the correct width).
                   </p>
                   <div className="space-y-2">
@@ -3042,10 +3042,10 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
                 </Section>
               )}
               {showHammer && is16Wide && config.truss === "hammer" && (
-                <Section title="16′ Hammer Truss (GLB) — Scale & Position" index="A1.9e">
+                <Section title="16′ Hammer Truss — Scale & Position" index="A1.9e">
                   <p className="mb-2 text-[10px] text-ink/50">
-                    The 16′ wide hammer truss is rendered from an imported GLB
-                    model. Scale is a multiplier on top of an auto-fit to the
+                    The 16′ wide hammer truss is built from dimensioned timber profiles.
+                    Scale is a multiplier on top of an auto-fit to the
                     pavilion span (so 1.00× starts at the correct width).
                   </p>
                   <div className="space-y-2">
@@ -3079,10 +3079,10 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
                 </Section>
               )}
               {showHammer && is20Wide && config.truss === "hammer" && (
-                <Section title="20′ Hammer Truss (GLB) — Scale & Position" index="A1.9f">
+                <Section title="20′ Hammer Truss — Scale & Position" index="A1.9f">
                   <p className="mb-2 text-[10px] text-ink/50">
-                    The 20′ wide hammer truss is rendered from an imported GLB
-                    model. Scale is a multiplier on top of an auto-fit to the
+                    The 20′ wide hammer truss is built from dimensioned timber profiles.
+                    Scale is a multiplier on top of an auto-fit to the
                     pavilion span (so 1.00× starts at the correct width).
                   </p>
                   <div className="space-y-2">

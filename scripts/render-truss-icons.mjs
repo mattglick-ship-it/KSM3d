@@ -1,13 +1,14 @@
 // Render engineering previews directly from the application's truss functions
-// and authored GLBs/STLs. This is a static triangle projection, not an extra
+// and procedural member drawings. This is a static triangle projection, not an extra
 // WebGL context. Re-run after modifying model geometry or baked adjustments.
 import * as THREE from 'three';
 import ts from 'typescript';
-import {STLLoader} from 'three/examples/jsm/loaders/STLLoader.js';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createRequire} from 'node:module';
-const sharp=createRequire(import.meta.url)('sharp');
+const require=createRequire(import.meta.url);
+const sharp=require('sharp');
+require('./load-typescript.cjs');
+const {createPartGeometry,createHammerScene}=require('../components/pavilion/procedural-geometry.ts');
 const source=readFileSync('components/pavilion/Pavilion3D.tsx','utf8');
 const ast=ts.createSourceFile('model.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
 const wanted=['KingTruss','ArchTruss','PlumbRafter','SnowGuards','SeamRidges'];
@@ -15,10 +16,10 @@ const functions=ast.statements.filter(s=>ts.isFunctionDeclaration(s)&&wanted.inc
 const jsx=(type,props,...children)=>({type,props:{...props,children}});
 const assets={};
 for(const m of source.matchAll(/import (\w+) from "@\/assets\/([^\"]+)"/g))assets[m[1]]=JSON.parse(readFileSync('assets/'+m[2]));
-const loadStl=(url,enabled=true)=>{if(!enabled)return null;const b=readFileSync('public'+url);const geom=new STLLoader().parse(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength));geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();return{geom,axis:0}};
+const loadPart=(id,enabled=true)=>{if(!enabled)return null;const geom=createPartGeometry(id);geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();return{geom,axis:0}};
 const snowSource=readFileSync('lib/snow-retention.ts','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
 const snowGuardPositions=new Function(ts.transpileModule(snowSource,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return snowGuardPositions;')();
-const env={snowGuardPositions,THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadStl,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
+const env={snowGuardPositions,THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadPart,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
 const compiled=ts.transpileModule(functions,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;
 const model=new Function(...Object.keys(env),compiled+';return {KingTruss,ArchTruss,PlumbRafter,SnowGuards,SeamRidges};')(...Object.values(env));
 function object(node){
@@ -77,10 +78,7 @@ mkdirSync('public/truss-icons',{recursive:true});
 for(const width of [12,14,16,20])for(const style of ['king','arch','hammer']){
  const span=width*.3048-.3,rise=span/3;let root;
  if(style==='hammer'){
-  const buffer=readFileSync(`public/models/hammer${width}_truss.glb`);
-  const loader=new GLTFLoader();loader.register(()=>({name:'NO_TEXTURES',loadTexture:()=>Promise.resolve(null)}));
-  const gltf=await loader.parseAsync(buffer.buffer.slice(buffer.byteOffset,buffer.byteOffset+buffer.byteLength),'');root=gltf.scene;
-  root.traverse(m=>{if(m.isMesh)m.material=new THREE.MeshStandardMaterial({color:'#deb87c'})});
+  root=createHammerScene(width,new THREE.MeshStandardMaterial({color:'#deb87c'}));
  }else{root=object(model[style==='king'?'KingTruss':'ArchTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,plates:false}));
   const adjusts=style==='arch'?(JSON.parse(baked['pav.archPieceAdjustsByWidth.v14-runtime-large-widths']??'null')??arches)[width]:(JSON.parse(baked['pav.pieceAdjustsByWidth.v24-hammer14scrollmatcharch']??'{}')[`king-${width}`]??{});
   pa({rootRef:{current:root},adjusts,cacheKey:width});applyFrame();

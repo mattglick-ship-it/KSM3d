@@ -1,3 +1,4 @@
+import {expandedFrame,pavilionStations} from '@/lib/pavilion-layout';
 import { configureTimberMaterial } from './timber-grain';
 import { snowGuardPositions, snowRailLength, snowRoofLength } from '@/lib/snow-retention';
 import {NATURAL_PINE_BEAM,NATURAL_PINE_DECK} from '@/lib/natural-pine';
@@ -7,49 +8,49 @@ import { useLoader } from "@react-three/fiber";
 import { PieceAdjuster, type PieceAdjust } from "./PieceAdjuster";
 
 import * as THREE from "three";
-import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { createPartGeometry, createHammerMembers } from "./procedural-geometry";
 import type { PavilionConfig } from "@/lib/pavilion-config";
 import { WOOD_FINISHES, ROOF_MATERIALS } from "@/lib/pavilion-config";
 import shingleTextureAsset from "@/assets/shingle_tile.jpg.asset.json";
 import roofUndersideAsset from "@/assets/underside_planks_2k.jpg.asset.json";
 import woodTextureAsset from "@/assets/beam_pine.png.asset.json";
 import { useTimberSurface } from "./timber-surface";
-import scrollEndAsset from "@/assets/scroll_cut_concave.stl.asset.json";
-import girderBeamAsset from "@/assets/scroll_cut_girder_beam.stl.asset.json";
-import girderBeamLongAsset from "@/assets/girder_403.stl.asset.json";
-import girderCapAsset from "@/assets/girder_cap.stl.asset.json";
-import scrollRafterAsset from "@/assets/scroll_cut_rafter.stl.asset.json";
-import corvelBraceAsset from "@/assets/corvel_brace_v2.stl.asset.json";
-import postBaseAsset from "@/assets/post_base.stl.asset.json";
-import rakeTrimAsset from "@/assets/rake_trim.stl.asset.json";
-import shingleCapsAsset from "@/assets/shingle_caps2.stl.asset.json";
-import hammerTrussAsset from "@/assets/hammer_beam_truss.stl.asset.json";
-import hammerTruss20Asset from "@/assets/hammer_beam_truss_20.stl.asset.json";
-import kingBeam12Asset from "@/assets/king_beam_12.stl.asset.json";
-import archWingLAsset from "@/assets/arch_truss_wing_l.stl.asset.json";
-import archWingRAsset from "@/assets/arch_truss_wing_r.stl.asset.json";
-import archKingpinAsset from "@/assets/arch_kingpin.stl.asset.json";
-import archStrutLAsset from "@/assets/arch_truss_strut_l.stl.asset.json";
-import archStrutRAsset from "@/assets/arch_truss_strut_r.stl.asset.json";
-import archPlateLAsset from "@/assets/arch_plate_l.stl.asset.json";
-import simplePlateAsset from "@/assets/simple_plate.stl.asset.json";
-import topPlateAsset from "@/assets/top_plate.stl.asset.json";
-import webPlate2Asset from "@/assets/web_plate_2.stl.asset.json";
-import kingVPlateAsset from "@/assets/truss_plateV2.stl.asset.json";
-import kingWebPlateAsset from "@/assets/king_web_plate.stl.asset.json";
-import kingPeakPlateAsset from "@/assets/king_peak_plate.stl.asset.json";
-import kingHeelPlate2Asset from "@/assets/king_heel_plate2.stl.asset.json";
-import snowRailAsset from "@/assets/snowrail.stl.asset.json";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import { HAMMER20_PIECE_STLS, HAMMER20_EXTRA_PIECES, type Hammer20PieceKey } from "./hammer20PieceRegistry";
-import { Hammer12GlbTruss, HAMMER12_GLB_DEFAULT_ADJUST, type Hammer12GlbAdjust } from "./Hammer12GlbTruss";
-import { Hammer14GlbTruss, HAMMER14_GLB_DEFAULT_ADJUST, type Hammer14GlbAdjust } from "./Hammer14GlbTruss";
-import { Hammer16GlbTruss, HAMMER16_GLB_DEFAULT_ADJUST, type Hammer16GlbAdjust } from "./Hammer16GlbTruss";
-import { Hammer20GlbTruss, HAMMER20_GLB_DEFAULT_ADJUST, type Hammer20GlbAdjust } from "./Hammer20GlbTruss";
+import { Hammer12Truss, HAMMER12_GLB_DEFAULT_ADJUST, type Hammer12Adjust } from "./Hammer12Truss";
+import { Hammer14Truss, HAMMER14_GLB_DEFAULT_ADJUST, type Hammer14Adjust } from "./Hammer14Truss";
+import { Hammer16Truss, HAMMER16_GLB_DEFAULT_ADJUST, type Hammer16Adjust } from "./Hammer16Truss";
+import { Hammer20Truss, HAMMER20_GLB_DEFAULT_ADJUST, type Hammer20Adjust } from "./Hammer20Truss";
 
-import trussPlateV2Asset from "@/assets/truss_plateV2.stl.asset.json";
-import webPlateAsset from "@/assets/truss_platewac.stl.asset.json";
-import peakPlateAsset from "@/assets/truss_platepeak.stl.asset.json";
+
+
+
 import pebblesAsset from "@/assets/ganges_pebbles.png.asset.json";
 import capPebblesAsset from "@/assets/floor_pebbles.jpg.asset.json";
 
@@ -66,24 +67,8 @@ function makeFallbackScrollGeometry(): THREE.BufferGeometry {
  *  cross-section to a target beam thickness. Returns a geometry whose local
  *  +X axis runs along the beam's length (tip pointing +X). */
 function useScrollEndGeometry(targetCrossSection: number) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry>(() => makeFallbackScrollGeometry());
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      scrollEndAsset.url,
-      (geo) => {
-        if (!cancelled) setRaw(geo);
-      },
-      undefined,
-      (err) => {
-        console.warn("scroll-end STL failed to load, using fallback box", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("scroll_cut_concave"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     const g = raw.clone();
     g.computeBoundingBox();
@@ -128,25 +113,9 @@ function useScrollEndGeometry(targetCrossSection: number) {
 /** Load the girder-beam STL once, scale Y/Z to match the beam's square
  *  cross-section, and scale X to the requested length. Geometry's local +X
  *  runs along the beam's length. */
-function useGirderBeamGeometry(targetCrossSection: number, targetLength: number, assetUrl: string = girderBeamAsset.url) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      assetUrl,
-      (geo) => {
-        if (!cancelled) setRaw(geo);
-      },
-      undefined,
-      (err) => {
-        console.warn("girder-beam STL failed to load, using fallback box", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [assetUrl]);
+function useGirderBeamGeometry(targetCrossSection: number, targetLength: number, assetUrl: string = "scroll_cut_girder_beam") {
+  const raw = useMemo(() => createPartGeometry(assetUrl), [assetUrl]);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     const src = raw ?? new THREE.BoxGeometry(1, 1, 1);
     const g = src.clone();
@@ -171,18 +140,8 @@ function useGirderBeamGeometry(targetCrossSection: number, targetLength: number,
  *  proportionally so the cap keeps its natural aspect. Local +X points
  *  outward from the beam end. */
 function useGirderCapGeometry(targetCrossSection: number) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      girderCapAsset.url,
-      (geo) => { if (!cancelled) setRaw(geo); },
-      undefined,
-      (err) => { console.warn("girder-cap STL failed to load", err); },
-    );
-    return () => { cancelled = true; };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("girder_cap"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     if (!raw) return null;
     const g = raw.clone();
@@ -299,24 +258,8 @@ function splitGeometryByFaceNormal(
  *  Output geometry's +X axis matches the scene's horizontal run direction so it
  *  can be mirrored by scaling X by `side`. */
 function useScrollCutRafterGeometry(runX: number, t: number, depth: number) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      scrollRafterAsset.url,
-      (geo) => {
-        if (!cancelled) setRaw(geo);
-      },
-      undefined,
-      (err) => {
-        console.warn("scroll-cut rafter STL failed to load, using fallback box", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("scroll_cut_rafter2"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     const src = raw ?? new THREE.BoxGeometry(1, 1, 1);
     const g = src.clone();
@@ -727,9 +670,13 @@ function WoodMaterial({
   const lightened = useMemo(() => new THREE.Color(color), [color]);
   const pieceKey = piece ? `piece:${piece}` : category ? `cat:${category}` : "";
   const pieceLabel = piece ?? category ?? "";
+  // A finish owns its shader as well as its bump map. Recreate the material on
+  // finish changes: R3F's onUpdate can otherwise run the previous render's
+  // callback while applying new props, leaving the old finish shader active.
   if (singleMaterial) {
     return (
       <meshStandardMaterial
+        key={finish}
         map={tex0}
         {...surface0}
         color={lightened}
@@ -750,7 +697,7 @@ function WoodMaterial({
     <>
       {texs.map((tex, i) => (
         <meshStandardMaterial
-          key={i}
+          key={`${finish}:${i}`}
           attach={`material-${i}`}
           map={tex}
           {...surfaces[i]}
@@ -894,24 +841,8 @@ function SeamRidges({
  *  center on the cross-section origin with the top flange at Y=0, then stretch
  *  the Z extrude axis to match the rake length. */
 function useRakeTrimGeometry(targetLenM: number, rakeSign: 1 | -1) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      rakeTrimAsset.url,
-      (g) => {
-        if (!cancelled) setRaw(g);
-      },
-      undefined,
-      (err) => {
-        console.warn("rake-trim STL failed to load", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("rake_trim"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     if (!raw) return null;
     const IN = 0.0254;
@@ -1260,18 +1191,8 @@ function SnowRail({
 }) {
   const IN = 0.0254;
   const adjust = useContext(SnowRailAdjustContext);
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      snowRailAsset.url,
-      (g) => { if (!cancelled) setRaw(g); },
-      undefined,
-      (err) => console.warn("snow rail STL failed to load", err),
-    );
-    return () => { cancelled = true; };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("snowrail"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
 
   const geometry = useMemo(() => {
     if (!raw) return null;
@@ -1324,18 +1245,8 @@ function SnowRail({
  *  with its base at local Y=0, centered on X (across the ridge) and Z (along
  *  the ridge), converted to scene meters. */
 function useShingleCapGeometry() {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      shingleCapsAsset.url,
-      (geo) => { if (!cancelled) setRaw(geo); },
-      undefined,
-      (err) => { console.warn("shingle-caps STL failed to load", err); },
-    );
-    return () => { cancelled = true; };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("shingle_caps2"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     if (!raw) return null;
     const g = raw.clone();
@@ -1777,27 +1688,11 @@ function Post({
   );
 }
 
-/** Load the post-base STL. STL Z axis is up; X/Y are the horizontal footprint.
+/** Manufacture the rounded steel base. Drawing Z is up; X/Y are its footprint.
  *  Scaled uniformly so the larger horizontal dimension equals `targetWidthM`. */
 function usePostBaseGeometry(targetWidthM: number) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      postBaseAsset.url,
-      (geo) => {
-        if (!cancelled) setRaw(geo);
-      },
-      undefined,
-      (err) => {
-        console.warn("post-base STL failed to load", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("post_base"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     if (!raw) return null;
     const g = raw.clone();
@@ -1837,7 +1732,7 @@ function PostBase({ x, z, scale = 1 }: { x: number; z: number; scale?: number })
   if (!geo) return null;
   return (
     <mesh position={[x, 0, z]} geometry={geo} castShadow receiveShadow>
-      <meshStandardMaterial color="#0a0a0a" metalness={1} roughness={0.35} />
+      <meshStandardMaterial color="#202326" metalness={0.15} roughness={0.68} />
     </mesh>
   );
 }
@@ -1848,24 +1743,8 @@ function PostBase({ x, z, scale = 1 }: { x: number; z: number; scale?: number })
  *  thickness centered on Z), converted to scene meters, then uniformly
  *  scaled so the horizontal leg is `targetLenM` meters long. */
 function useCorvelBraceGeometry(targetDiagonalM: number) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      corvelBraceAsset.url,
-      (geo) => {
-        if (!cancelled) setRaw(geo);
-      },
-      undefined,
-      (err) => {
-        console.warn("corvel-brace STL failed to load", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const raw = useMemo(() => createPartGeometry("corvel_brace_v2"), []);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     if (!raw) return null;
     const g = raw.clone();
@@ -1909,18 +1788,8 @@ function useCorvelBraceGeometry(targetDiagonalM: number) {
 /** Load the user-supplied truss-plate STL. Recenters at origin, scales so the
  *  largest XY extent equals `targetSizeM`, and forces Z thickness to ~0.5". */
 function usePlateGeometry(url: string, targetSizeM: number) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      url,
-      (geo) => { if (!cancelled) setRaw(geo); },
-      undefined,
-      (err) => { console.warn("plate STL failed to load", err); },
-    );
-    return () => { cancelled = true; };
-  }, [url]);
+  const raw = useMemo(() => createPartGeometry(url), [url]);
+  useEffect(() => () => raw.dispose(), [raw]);
   return useMemo(() => {
     if (!raw) return null;
     const g = raw.clone();
@@ -1945,15 +1814,15 @@ function usePlateGeometry(url: string, targetSizeM: number) {
 }
 
 function useTrussPlateVGeometry(targetSizeM: number) {
-  return usePlateGeometry(trussPlateV2Asset.url, targetSizeM);
+  return usePlateGeometry("truss_plateV2", targetSizeM);
 }
 
 function useWebPlateGeometry(targetSizeM: number) {
-  return usePlateGeometry(webPlateAsset.url, targetSizeM);
+  return usePlateGeometry("truss_platewac", targetSizeM);
 }
 
 function usePeakPlateGeometry(targetSizeM: number) {
-  return usePlateGeometry(peakPlateAsset.url, targetSizeM);
+  return usePlateGeometry("truss_platepeak", targetSizeM);
 }
 
 function TrussPlateSTL({
@@ -2792,7 +2661,7 @@ function KingVPlate({
   bisectorAngle,
   sizeScale = 1,
   piece,
-  url = kingVPlateAsset.url,
+  url = "truss_plateV2",
 }: {
   position: [number, number];
   depth: number;
@@ -2802,34 +2671,8 @@ function KingVPlate({
   piece: string;
   url?: string;
 }) {
-  const [geom, setGeom] = useState<THREE.BufferGeometry | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    const IN_ = 0.0254;
-    loader.load(
-      url,
-      (raw) => {
-        if (cancelled) return;
-        const g = raw.clone();
-        g.scale(IN_, IN_, IN_);
-        g.computeBoundingBox();
-        const bb = g.boundingBox!;
-        // Recenter so origin is the joint anchor.
-        g.translate(
-          -(bb.min.x + bb.max.x) / 2,
-          -(bb.min.y + bb.max.y) / 2,
-          -(bb.min.z + bb.max.z) / 2,
-        );
-        g.computeVertexNormals();
-        setGeom(g);
-      },
-      undefined,
-      (err) => console.warn("king V plate STL failed to load", err),
-    );
-    return () => { cancelled = true; };
-  }, [url]);
-
+  const geom = useMemo(() => { const g=createPartGeometry(url);g.scale(.0254,.0254,.0254);g.center();return g; }, [url]);
+  useEffect(() => () => geom.dispose(), [geom]);
   if (!geom) return null;
   // STL was modeled with the V opening along +Y. Rotate so +Y aligns with the
   // requested bisectorAngle: needed Z-rotation = bisectorAngle − π/2.
@@ -2977,15 +2820,15 @@ function ArchTruss({
   // Arch King: only the top rafter chords are kept. All other members
   // (tie beam, collar, kingpost, struts, corbel braces) are removed.
   void kingH; void collarLen; void strut; void corbel;
-  const wingL = useSingleHammerPieceGeom(archWingLAsset.url, true);
-  const wingR = useSingleHammerPieceGeom(archWingRAsset.url, true);
-  const kingpin = useSingleHammerPieceGeom(archKingpinAsset.url, true);
-  const strutL = useSingleHammerPieceGeom(archStrutLAsset.url, true);
-  const strutR = useSingleHammerPieceGeom(archStrutRAsset.url, true);
-  const plateL = useSingleHammerPieceGeom(archPlateLAsset.url, true);
-  const simplePlate = useSingleHammerPieceGeom(simplePlateAsset.url, true);
-  const topPlate = useSingleHammerPieceGeom(topPlateAsset.url, true);
-  const webPlate2 = useSingleHammerPieceGeom(webPlate2Asset.url, true);
+  const wingL = useSingleHammerPieceGeom("arch_truss_wing_l", true);
+  const wingR = useSingleHammerPieceGeom("arch_truss_wing_r", true);
+  const kingpin = useSingleHammerPieceGeom("arch_kingpin", true);
+  const strutL = useSingleHammerPieceGeom("arch_truss_strut_l", true);
+  const strutR = useSingleHammerPieceGeom("arch_truss_strut_r", true);
+  const plateL = useSingleHammerPieceGeom("arch_plate_l", true);
+  const simplePlate = useSingleHammerPieceGeom("simple_plate", true);
+  const topPlate = useSingleHammerPieceGeom("top_plate", true);
+  const webPlate2 = useSingleHammerPieceGeom("web_plate_2", true);
   return (
     <group name="arch-truss" position={[0, baseY, z]}>
       {/* Top chords (rafters): match the side rafter size/length exactly */}
@@ -3175,103 +3018,16 @@ function ArchTruss({
  *  WoodMaterial grain runs along the piece's long edge — same convention
  *  the splitter uses for the auto-partitioned buckets. */
 function useHammer20PieceGeoms(enabled: boolean): Partial<Record<Hammer20PieceKey, { geom: THREE.BufferGeometry; axis: number }>> {
-  const [loaded, setLoaded] = useState<Partial<Record<Hammer20PieceKey, { geom: THREE.BufferGeometry; axis: number }>>>({});
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    const loader = new STLLoader();
-    const IN = 0.0254;
-    const entries = Object.entries(HAMMER20_PIECE_STLS) as Array<[Hammer20PieceKey, string]>;
-    entries.forEach(([key, url]) => {
-      loader.load(
-        url,
-        (raw) => {
-          if (cancelled) return;
-          const g = raw.clone();
-          g.scale(IN, IN, IN);
-          g.computeBoundingBox();
-          g.computeVertexNormals();
-          // Generate planar UVs from XY bbox so WoodMaterial has something to sample.
-          const bb = g.boundingBox!;
-          const sxw = Math.max(1e-6, bb.max.x - bb.min.x);
-          const syw = Math.max(1e-6, bb.max.y - bb.min.y);
-          const pos = g.attributes.position as THREE.BufferAttribute;
-          const uv = new Float32Array(pos.count * 2);
-          let sumX = 0, sumY = 0;
-          for (let i = 0; i < pos.count; i++) {
-            const x = pos.getX(i), y = pos.getY(i);
-            uv[i * 2]     = (x - bb.min.x) / sxw;
-            uv[i * 2 + 1] = (y - bb.min.y) / syw;
-            sumX += x; sumY += y;
-          }
-          g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-          const mx = sumX / pos.count;
-          const my = sumY / pos.count;
-          let sxx = 0, syy = 0, sxyc = 0;
-          for (let i = 0; i < pos.count; i++) {
-            const dx = pos.getX(i) - mx;
-            const dy = pos.getY(i) - my;
-            sxx += dx * dx; syy += dy * dy; sxyc += dx * dy;
-          }
-          const axis = 0.5 * Math.atan2(2 * sxyc, sxx - syy);
-          setLoaded((prev) => ({ ...prev, [key]: { geom: g, axis } }));
-        },
-        undefined,
-        (err) => console.warn(`hammer20 piece ${key} failed to load`, err),
-      );
-    });
-    return () => { cancelled = true; };
-  }, [enabled]);
-  return loaded;
+  const loaded=useMemo(()=>{const result:Partial<Record<Hammer20PieceKey,{geom:THREE.BufferGeometry;axis:number}>>={};if(enabled)for(const [key,id]of Object.entries(HAMMER20_PIECE_STLS)){const geom=createPartGeometry(id);geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();const size=geom.boundingBox!.getSize(new THREE.Vector3());result[key as Hammer20PieceKey]={geom,axis:size.y>size.x?Math.PI/2:0};}return result;},[enabled]);
+  useEffect(()=>()=>Object.values(loaded).forEach(p=>p.geom.dispose()),[loaded]);return loaded;
 }
 
 /** Load a single STL (inches, truss-local frame) and return its geom + a
  *  principal-axis angle so WoodMaterial's grain runs along its long edge.
  *  Mirrors the per-piece processing inside useHammer20PieceGeoms. */
 function useSingleHammerPieceGeom(url: string, enabled: boolean): { geom: THREE.BufferGeometry; axis: number } | null {
-  const [loaded, setLoaded] = useState<{ geom: THREE.BufferGeometry; axis: number } | null>(null);
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    const loader = new STLLoader();
-    const IN = 0.0254;
-    loader.load(
-      url,
-      (raw) => {
-        if (cancelled) return;
-        const g = raw.clone();
-        g.scale(IN, IN, IN);
-        g.computeBoundingBox();
-        g.computeVertexNormals();
-        const bb = g.boundingBox!;
-        const sxw = Math.max(1e-6, bb.max.x - bb.min.x);
-        const syw = Math.max(1e-6, bb.max.y - bb.min.y);
-        const pos = g.attributes.position as THREE.BufferAttribute;
-        const uv = new Float32Array(pos.count * 2);
-        let sumX = 0, sumY = 0;
-        for (let i = 0; i < pos.count; i++) {
-          const x = pos.getX(i), y = pos.getY(i);
-          uv[i * 2]     = (x - bb.min.x) / sxw;
-          uv[i * 2 + 1] = (y - bb.min.y) / syw;
-          sumX += x; sumY += y;
-        }
-        g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-        const mx = sumX / pos.count;
-        const my = sumY / pos.count;
-        let sxx = 0, syy = 0, sxyc = 0;
-        for (let i = 0; i < pos.count; i++) {
-          const dx = pos.getX(i) - mx;
-          const dy = pos.getY(i) - my;
-          sxx += dx * dx; syy += dy * dy; sxyc += dx * dy;
-        }
-        const axis = 0.5 * Math.atan2(2 * sxyc, sxx - syy);
-        setLoaded({ geom: g, axis });
-      },
-      undefined,
-      (err) => console.warn(`single hammer piece STL failed to load`, err),
-    );
-    return () => { cancelled = true; };
-  }, [url, enabled]);
+  const loaded=useMemo(()=>{if(!enabled)return null;const geom=createPartGeometry(url);geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();const size=geom.boundingBox!.getSize(new THREE.Vector3());return {geom,axis:size.y>size.x?Math.PI/2:0};},[url,enabled]);
+  useEffect(()=>()=>loaded?.geom.dispose(),[loaded]);
   return loaded;
 }
 
@@ -3283,445 +3039,7 @@ function useSingleHammerPieceGeom(url: string, enabled: boolean): { geom: THREE.
  *  triangles into tie / kingpost / strut.l|r / corbel.l|r so each piece can
  *  carry its own grain-rotation override. */
 function useHammerTrussGeometries(spanM: number, riseM: number, uniformProfile55: boolean = false, useDedicated20Stl: boolean = false) {
-  const [raw, setRaw] = useState<THREE.BufferGeometry | null>(null);
-  // Select STL variant: 20' footprint options use the user-supplied dedicated
-  // truss model, and must never go through the old spatial splitter.
-  const IN_SEL = 0.0254;
-  const is20ft = useDedicated20Stl || spanM > 18 * 12 * IN_SEL;
-  const stlUrl = is20ft ? hammerTruss20Asset.url : hammerTrussAsset.url;
-  useEffect(() => {
-    let cancelled = false;
-    const loader = new STLLoader();
-    loader.load(
-      stlUrl,
-      (g) => {
-        if (!cancelled) setRaw(g);
-      },
-      undefined,
-      (err) => {
-        console.warn("hammer-truss STL failed to load", err);
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [stlUrl]);
-  return useMemo(() => {
-    if (!raw) return null;
-    const IN = 0.0254;
-    const g = raw.clone();
-    g.scale(IN, IN, IN);
-    g.computeBoundingBox();
-    let bb = g.boundingBox!;
-    // Recenter X (span) and Z (thickness); keep Y origin so the tie beam
-    // line stays at ~0 in local coords.
-    g.translate(-(bb.min.x + bb.max.x) / 2, 0, -(bb.min.z + bb.max.z) / 2);
-    g.computeBoundingBox();
-    bb = g.boundingBox!;
-    // Fit the truss uniformly into the King-Post envelope to preserve
-    // pitch — the truss still rests on the corbel brace. Strut tops get
-    // extended individually below so the web beams reach the rafter
-    // underside even when the rafter pitch differs from the modeled pitch.
-    const tieDrop = 3.25 * IN;
-    const targetSpanX = spanM + 8 * IN;
-    const targetHeightY = riseM + tieDrop;
-    const fitX = targetSpanX / Math.max(1e-6, bb.max.x - bb.min.x);
-    const fitY = targetHeightY / Math.max(1e-6, bb.max.y - bb.min.y);
-    const sXY = Math.min(fitX, fitY);
-    // Force out-of-plane (Z) thickness to 5.5" so every beam is 5.5" wide.
-    const targetZ = 5.5 * IN;
-    const sZ = targetZ / Math.max(1e-6, bb.max.z - bb.min.z);
-    g.scale(sXY, sXY, sZ);
-    g.computeVertexNormals();
-    g.computeBoundingBox();
-    bb = g.boundingBox!;
-    // Raise the truss so its apex (top of king post / kingrafter intersection)
-    // sits level with the top of the pavilion rafters at the peak.
-    const peakTargetY = riseM;
-    const yShift = peakTargetY - bb.max.y;
-    g.translate(0, yShift, 0);
-    g.computeBoundingBox();
-    bb = g.boundingBox!;
-
-    // 20′ variant: partition the uploaded STL into every truss member as
-    // co-located groups (tie L/R, kingpost, struts L/R, corbels L/R, drops
-    // L/R, prince L/R), each with its own PCA-aligned grain axis. Same
-    // shape as the source STL — no transforms on individual pieces — so the
-    // realistic look is preserved, but each piece can be moved/scaled
-    // independently via the per-piece offset/scale sliders.
-    if (is20ft) {
-      const sxw0 = Math.max(1e-6, bb.max.x - bb.min.x);
-      const syw0 = Math.max(1e-6, bb.max.y - bb.min.y);
-      const pos = g.attributes.position as THREE.BufferAttribute;
-      const norm = g.attributes.normal as THREE.BufferAttribute;
-      const idx = g.index;
-      const triCount = idx ? idx.count / 3 : pos.count / 3;
-      const vIndex = (t: number, v: number) => (idx ? idx.getX(t * 3 + v) : t * 3 + v);
-
-      // Thresholds scale with the model: bb-relative for X bands, span-ratio
-      // for Y bands (relative to the 16′ baseline the splitter was tuned to).
-      const halfSpanX = bb.max.x;
-      const baselineSpanM = 16 * 12 * IN;
-      const yScale = spanM / baselineSpanM;
-      const tieBottom = -4 * IN * yScale;
-      const tieTop = 7.25 * IN * yScale;
-      const tieCapCentroidTop = 8.5 * IN * yScale;
-      const hammerBeamTop = 8 * IN * yScale;
-      const postStubTop = 16 * IN * yScale;
-      // X bands as fractions of half-span.
-      const kingBandFrac = 0.05;
-      const dropBandFrac = 0.10;
-      const princeXMinFrac = 0.48;
-      const princeXMaxFrac = 0.62;
-
-      type BK20 = "tieL" | "tieR" | "kingpost" | "post" | "strutL" | "strutR" | "corbelL" | "corbelR" | "dropL" | "dropR" | "princeL" | "princeR";
-      const bucketKeys: BK20[] = ["tieL", "tieR", "kingpost", "post", "strutL", "strutR", "corbelL", "corbelR", "dropL", "dropR", "princeL", "princeR"];
-      const buckets: Record<BK20, number[]> = {
-        tieL: [], tieR: [], kingpost: [], post: [], strutL: [], strutR: [],
-        corbelL: [], corbelR: [], dropL: [], dropR: [], princeL: [], princeR: [],
-      };
-      for (let t = 0; t < triCount; t++) {
-        const i0 = vIndex(t, 0), i1 = vIndex(t, 1), i2 = vIndex(t, 2);
-        const x0 = pos.getX(i0), x1 = pos.getX(i1), x2 = pos.getX(i2);
-        const y0 = pos.getY(i0), y1 = pos.getY(i1), y2 = pos.getY(i2);
-        const cx = (x0 + x1 + x2) / 3;
-        const cy = (y0 + y1 + y2) / 3;
-        const acxFrac = Math.abs(cx) / Math.max(1e-6, halfSpanX);
-        const allInTie =
-          Math.min(y0, y1, y2) >= tieBottom &&
-          Math.min(y0, y1, y2) <= tieTop &&
-          cy <= tieCapCentroidTop;
-        let key: BK20;
-        if (allInTie) key = cx < 0 ? "tieL" : "tieR";
-        else if (cy < tieBottom) key = cx < 0 ? "corbelL" : "corbelR";
-        else if (acxFrac < kingBandFrac) key = cy <= postStubTop ? "post" : "kingpost";
-        else if (acxFrac > 1 - dropBandFrac) key = cx < 0 ? "dropL" : "dropR";
-        else {
-          const inPrince =
-            cy > hammerBeamTop &&
-            acxFrac >= princeXMinFrac && acxFrac <= princeXMaxFrac;
-          if (inPrince) key = cx < 0 ? "princeL" : "princeR";
-          else key = cx < 0 ? "strutL" : "strutR";
-        }
-        buckets[key].push(t);
-      }
-
-      const buildSub = (tris: number[], chamferKey?: "tieL" | "tieR", seamExtendIn: number = 0): { geom: THREE.BufferGeometry; axis: number } => {
-        const sub = new THREE.BufferGeometry();
-        const sp = new Float32Array(tris.length * 9);
-        const sn = new Float32Array(tris.length * 9);
-        const su = new Float32Array(tris.length * 6);
-        let n = 0, sumX = 0, sumY = 0;
-        tris.forEach((ti, i) => {
-          for (let v = 0; v < 3; v++) {
-            const vi = vIndex(ti, v);
-            const x = pos.getX(vi), y = pos.getY(vi), z = pos.getZ(vi);
-            sp[i * 9 + v * 3]     = x;
-            sp[i * 9 + v * 3 + 1] = y;
-            sp[i * 9 + v * 3 + 2] = z;
-            sn[i * 9 + v * 3]     = norm.getX(vi);
-            sn[i * 9 + v * 3 + 1] = norm.getY(vi);
-            sn[i * 9 + v * 3 + 2] = norm.getZ(vi);
-            su[i * 6 + v * 2]     = (x - bb.min.x) / sxw0;
-            su[i * 6 + v * 2 + 1] = (y - bb.min.y) / syw0;
-            n++; sumX += x; sumY += y;
-          }
-        });
-        const mx = sumX / Math.max(1, n);
-        const my = sumY / Math.max(1, n);
-        let sxx = 0, syy = 0, sxyc = 0;
-        tris.forEach((ti) => {
-          for (let v = 0; v < 3; v++) {
-            const vi = vIndex(ti, v);
-            const dx = pos.getX(vi) - mx;
-            const dy = pos.getY(vi) - my;
-            sxx += dx * dx; syy += dy * dy; sxyc += dx * dy;
-          }
-        });
-        const axis = 0.5 * Math.atan2(2 * sxyc, sxx - syy);
-        // Seam-tighten: extend the two ends of this piece along its principal
-        // axis by seamExtendIn (inches). Vertices in the end zones get nudged
-        // outward so neighboring pieces overlap and dark V-seams close. The
-        // body of the piece is untouched (perpendicular dimension unaffected).
-        if (seamExtendIn > 0) {
-          const ext = seamExtendIn * IN;
-          const cosA = Math.cos(axis), sinA = Math.sin(axis);
-          const vCount = sp.length / 3;
-          let tMin = Infinity, tMax = -Infinity;
-          const ts = new Float32Array(vCount);
-          for (let i = 0; i < vCount; i++) {
-            const dx = sp[i * 3] - mx;
-            const dy = sp[i * 3 + 1] - my;
-            const t = cosA * dx + sinA * dy;
-            ts[i] = t;
-            if (t < tMin) tMin = t;
-            if (t > tMax) tMax = t;
-          }
-          // End-zone width: ~12% of piece length, capped at 2".
-          const endZone = Math.min(2 * IN, (tMax - tMin) * 0.12);
-          for (let i = 0; i < vCount; i++) {
-            const t = ts[i];
-            let shift = 0;
-            if (t <= tMin + endZone) shift = -ext;
-            else if (t >= tMax - endZone) shift = ext;
-            if (shift !== 0) {
-              sp[i * 3]     += cosA * shift;
-              sp[i * 3 + 1] += sinA * shift;
-            }
-          }
-        }
-        if (chamferKey) {
-          let xMinP = Infinity, xMaxP = -Infinity, yMinP = Infinity;
-          const vCount = sp.length / 3;
-          for (let i = 0; i < vCount; i++) {
-            if (sp[i * 3] < xMinP) xMinP = sp[i * 3];
-            if (sp[i * 3] > xMaxP) xMaxP = sp[i * 3];
-            if (sp[i * 3 + 1] < yMinP) yMinP = sp[i * 3 + 1];
-          }
-          const cSize = 2.0 * IN;
-          const outerIsMin = chamferKey === "tieL";
-          for (let i = 0; i < vCount; i++) {
-            const x = sp[i * 3], y = sp[i * 3 + 1];
-            const dx = outerIsMin ? (x - xMinP) : (xMaxP - x);
-            const dy = y - yMinP;
-            if (dx >= 0 && dy >= 0 && dx < cSize && dy < cSize && dx + dy < cSize) {
-              const shift = (cSize - (dx + dy)) / 2;
-              sp[i * 3]     += outerIsMin ? shift : -shift;
-              sp[i * 3 + 1] += shift;
-            }
-          }
-        }
-        sub.setAttribute("position", new THREE.BufferAttribute(sp, 3));
-        sub.setAttribute("normal", new THREE.BufferAttribute(sn, 3));
-        sub.setAttribute("uv", new THREE.BufferAttribute(su, 2));
-        if (chamferKey || seamExtendIn > 0) sub.computeVertexNormals();
-        return { geom: sub, axis };
-      };
-
-      const geoms: Partial<Record<BK20, THREE.BufferGeometry>> = {};
-      const axisAngles: Partial<Record<BK20, number>> = {};
-      // Per-piece end-extension to close splitter seams. The 20′ STL splitter
-      // leaves roughly 1.75″ shadow seams at most joints, so every cut member
-      // gets a matching hidden overlap along its long grain axis.
-      const seamExtend: Record<BK20, number> = {
-        tieL: 1.9, tieR: 1.9,
-        kingpost: 1.9, post: 1.9,
-        strutL: 1.9, strutR: 1.9,
-        corbelL: 1.9, corbelR: 1.9,
-        dropL: 1.9, dropR: 1.9,
-        princeL: 1.9, princeR: 1.9,
-      };
-      for (const k of bucketKeys) {
-        const tris = buckets[k];
-        if (!tris.length) continue;
-        const chamferKey = k === "tieL" || k === "tieR" ? k : undefined;
-        const { geom, axis } = buildSub(tris, chamferKey, seamExtend[k] ?? 0);
-        geoms[k] = geom;
-        axisAngles[k] = axis;
-      }
-
-      // Force tie grain to match prince grain (visual consistency).
-      if (axisAngles.princeL !== undefined) axisAngles.tieL = axisAngles.princeL;
-      if (axisAngles.princeR !== undefined) axisAngles.tieR = axisAngles.princeR;
-      return { geoms, axisAngles };
-    }
-
-
-
-
-
-
-
-
-    // Region thresholds (meters) in the scaled local frame.
-    // The hammer-beam STL's horizontal tie is not centered exactly on y=0:
-    // its lower face is around -3.25" and its visible upper/trimmed faces reach
-    // a bit above 10" on triangles that bridge into the next member. If we only
-    // accept triangles whose every vertex is under the tie top, those cap faces
-    // stay behind when the tie slider moves and the beam appears to break.
-    const tieBottom = -4 * IN;
-    const tieTop = 7.25 * IN;
-    const tieCapCentroidTop = 8.5 * IN;
-    const kingBand = 5 * IN;  // |x| < this above tie → king post / stub
-    const postStubTop = 16 * IN; // above tie up to here → short stub post
-    const halfSpanX = bb.max.x;
-    const dropBand = 10 * IN; // within this of the outer edge → vertical drop post
-
-    const pos = g.attributes.position as THREE.BufferAttribute;
-    const norm = g.attributes.normal as THREE.BufferAttribute;
-    const idx = g.index;
-    const triCount = idx ? idx.count / 3 : pos.count / 3;
-    const vIndex = (t: number, v: number) => (idx ? idx.getX(t * 3 + v) : t * 3 + v);
-
-    const bucketKeys = ["tieL", "tieR", "kingpost", "post", "strutL", "strutR", "corbelL", "corbelR", "dropL", "dropR", "princeL", "princeR"] as const;
-    type BK = typeof bucketKeys[number];
-    const buckets: Record<BK, number[]> = {
-      tieL: [], tieR: [], kingpost: [], post: [], strutL: [], strutR: [], corbelL: [], corbelR: [], dropL: [], dropR: [], princeL: [], princeR: [],
-    };
-
-    // Prince beam: short vertical post on top of the hammer beam, rising to
-    // meet the rafter underside. Identified by all three triangle vertices
-    // having |x| in a narrow band roughly halfway between the king post and
-    // the outer drop post.
-    const princeXMin = 0.48 * halfSpanX;
-    const princeXMax = 0.62 * halfSpanX;
-
-    for (let t = 0; t < triCount; t++) {
-      const i0 = vIndex(t, 0), i1 = vIndex(t, 1), i2 = vIndex(t, 2);
-      const x0 = pos.getX(i0), x1 = pos.getX(i1), x2 = pos.getX(i2);
-      const y0 = pos.getY(i0), y1 = pos.getY(i1), y2 = pos.getY(i2);
-      const cx = (x0 + x1 + x2) / 3;
-      const cy = (y0 + y1 + y2) / 3;
-      // Tie slab capture: all visible faces of the single horizontal beam must
-      // move together. Include cap triangles that touch the tie envelope even if
-      // one vertex rises above it; otherwise the top face shears off under move.
-      const allInTie =
-        Math.min(y0, y1, y2) >= tieBottom &&
-        Math.min(y0, y1, y2) <= tieTop &&
-        cy <= tieCapCentroidTop;
-      let key: BK;
-      if (allInTie) key = cx < 0 ? "tieL" : "tieR"; // split halves so each tie can move independently
-      else if (cy < tieBottom) key = cx < 0 ? "corbelL" : "corbelR";
-      else if (Math.abs(cx) < kingBand) key = cy <= postStubTop ? "post" : "kingpost";
-      else if (Math.abs(cx) > halfSpanX - dropBand) key = cx < 0 ? "dropL" : "dropR";
-      else {
-        // Above-tie strut region: peel off the prince beam first. The prince
-        // sits *on top of* the hammer beam (horizontal cantilever), so
-        // require the centroid to be above the hammer beam top — otherwise
-        // we'd swallow the hammer-beam cross-section into prince and its
-        // bottom face would poke out below the hammer beam.
-        const acx = Math.abs(cx);
-        const hammerBeamTop = 8 * IN; // ~top face of the hammer beam
-        // Use centroid-only test so prince-beam triangles with one vertex
-        // bleeding outside the narrow band still register as prince (otherwise
-        // the bucket comes up empty and the slider has nothing to scale).
-        const inPrince =
-          cy > hammerBeamTop &&
-          acx >= princeXMin && acx <= princeXMax;
-        if (inPrince) key = cx < 0 ? "princeL" : "princeR";
-        else key = cx < 0 ? "strutL" : "strutR";
-      }
-      buckets[key].push(t);
-    }
-
-
-    const sxw = Math.max(1e-6, bb.max.x - bb.min.x);
-    const syw = Math.max(1e-6, bb.max.y - bb.min.y);
-
-    const out: Partial<Record<BK, THREE.BufferGeometry>> = {};
-    const axisAngles: Partial<Record<BK, number>> = {};
-    for (const k of bucketKeys) {
-      const tris = buckets[k];
-      if (!tris.length) continue;
-      const sub = new THREE.BufferGeometry();
-      const sp = new Float32Array(tris.length * 9);
-      const sn = new Float32Array(tris.length * 9);
-      const su = new Float32Array(tris.length * 6);
-      // PCA accumulators over (x,y) to derive each piece's principal (long) axis.
-      let n = 0, sumX = 0, sumY = 0;
-      // Shrink prince beams 1mm in Z (0.5mm per face) so they sit slightly
-      // narrower than neighboring beams and don't z-fight at intersections.
-      const isPrince = k === "princeL" || k === "princeR";
-      const zScale = isPrince ? (targetZ - 0.001) / targetZ : 1;
-      tris.forEach((ti, i) => {
-        for (let v = 0; v < 3; v++) {
-          const vi = vIndex(ti, v);
-          const x = pos.getX(vi), y = pos.getY(vi), z = pos.getZ(vi) * zScale;
-          sp[i * 9 + v * 3] = x;
-          sp[i * 9 + v * 3 + 1] = y;
-          sp[i * 9 + v * 3 + 2] = z;
-          sn[i * 9 + v * 3] = norm.getX(vi);
-          sn[i * 9 + v * 3 + 1] = norm.getY(vi);
-          sn[i * 9 + v * 3 + 2] = norm.getZ(vi);
-          su[i * 6 + v * 2] = (x - bb.min.x) / sxw;
-          su[i * 6 + v * 2 + 1] = (y - bb.min.y) / syw;
-          n++; sumX += x; sumY += y;
-        }
-      });
-      const mx = sumX / Math.max(1, n);
-      const my = sumY / Math.max(1, n);
-      let sxx = 0, syy = 0, sxyc = 0;
-      tris.forEach((ti) => {
-        for (let v = 0; v < 3; v++) {
-          const vi = vIndex(ti, v);
-          const dx = pos.getX(vi) - mx;
-          const dy = pos.getY(vi) - my;
-          sxx += dx * dx; syy += dy * dy; sxyc += dx * dy;
-        }
-      });
-      // Principal-axis angle (direction of greatest variance) — the beam's long edge.
-      const axis = 0.5 * Math.atan2(2 * sxyc, sxx - syy);
-      axisAngles[k] = axis;
-
-      // 14′ option: force every hammer-truss member to a uniform 5.5″ × 5.5″
-      // cross-section. Thickness (Z) is already 5.5″; here we scale the
-      // perpendicular-to-axis dimension in-plane so the beam's visible face
-      // is exactly 5.5″ tall as well. Centered on the perpendicular mean so
-      // the beam's long axis stays put.
-      if (uniformProfile55) {
-        const cosA = Math.cos(axis);
-        const sinA = Math.sin(axis);
-        // Compute current perpendicular extent (u-coord across all verts).
-        let uMin = Infinity, uMax = -Infinity, uSum = 0, uN = 0;
-        for (let i = 0; i < sp.length / 3; i++) {
-          const dx = sp[i * 3] - mx;
-          const dy = sp[i * 3 + 1] - my;
-          const u = -sinA * dx + cosA * dy;
-          if (u < uMin) uMin = u;
-          if (u > uMax) uMax = u;
-          uSum += u; uN++;
-        }
-        const curW = Math.max(1e-6, uMax - uMin);
-        const targetW = 5.5 * IN;
-        const sU = targetW / curW;
-        const uMean = uSum / Math.max(1, uN);
-        // Rebuild positions: keep long-axis coord, scale perpendicular coord.
-        for (let i = 0; i < sp.length / 3; i++) {
-          const dx = sp[i * 3] - mx;
-          const dy = sp[i * 3 + 1] - my;
-          const t =  cosA * dx + sinA * dy;
-          const u = -sinA * dx + cosA * dy;
-          const uNew = (u - uMean) * sU + uMean;
-          sp[i * 3]     = mx + cosA * t - sinA * uNew;
-          sp[i * 3 + 1] = my + sinA * t + cosA * uNew;
-        }
-      }
-
-      // Cut a 45° chamfer on the outer-bottom corner of each tie half so the
-      // tie's end profile matches the drop post / prince beam end cuts.
-      if (k === "tieL" || k === "tieR") {
-        let xMinP = Infinity, xMaxP = -Infinity, yMinP = Infinity;
-        const vCount = sp.length / 3;
-        for (let i = 0; i < vCount; i++) {
-          if (sp[i * 3] < xMinP) xMinP = sp[i * 3];
-          if (sp[i * 3] > xMaxP) xMaxP = sp[i * 3];
-          if (sp[i * 3 + 1] < yMinP) yMinP = sp[i * 3 + 1];
-        }
-        const cSize = 2.0 * IN;
-        const outerIsMin = k === "tieL";
-        for (let i = 0; i < vCount; i++) {
-          const x = sp[i * 3], y = sp[i * 3 + 1];
-          const dx = outerIsMin ? (x - xMinP) : (xMaxP - x);
-          const dy = y - yMinP;
-          if (dx >= 0 && dy >= 0 && dx < cSize && dy < cSize && dx + dy < cSize) {
-            const shift = (cSize - (dx + dy)) / 2;
-            sp[i * 3]     += outerIsMin ? shift : -shift;
-            sp[i * 3 + 1] += shift;
-          }
-        }
-      }
-
-      sub.setAttribute("position", new THREE.BufferAttribute(sp, 3));
-      sub.setAttribute("normal", new THREE.BufferAttribute(sn, 3));
-      sub.setAttribute("uv", new THREE.BufferAttribute(su, 2));
-      if (uniformProfile55 || k === "tieL" || k === "tieR") sub.computeVertexNormals();
-      out[k] = sub;
-    }
-    // Force tie grain to match prince grain (visual consistency).
-    if (axisAngles.princeL !== undefined) axisAngles.tieL = axisAngles.princeL;
-    if (axisAngles.princeR !== undefined) axisAngles.tieR = axisAngles.princeR;
-    return { geoms: out, axisAngles };
-  }, [raw, spanM, riseM, uniformProfile55, useDedicated20Stl]);
+  const parts=useMemo(()=>{const width=spanM<13*.3048?12:spanM<15*.3048?14:spanM<18*.3048?16:20;const members=createHammerMembers(width);const keys:Hammer20PieceKey[]=['tieL','tieR','kingpost','princeL','princeR','topTie','corbelL','corbelR'];const geoms:Partial<Record<Hammer20PieceKey,THREE.BufferGeometry>>={},axisAngles:Partial<Record<Hammer20PieceKey,number>>={};members.forEach((m,i)=>{if(i<8){geoms[keys[i]]=m.geometry;axisAngles[keys[i]]=i>=2&&i<=4?Math.PI/2:0;}else m.geometry.dispose();});return {geoms,axisAngles};},[spanM]);useEffect(()=>()=>Object.values(parts.geoms).forEach(g=>g.dispose()),[parts]);return parts;
 }
 
 /** Hammer beam truss: body geometry comes from the supplied STL (split into
@@ -3850,7 +3168,7 @@ function HammerTruss({
   // Truss span at 12' width is ~11' after post-offset trim, so match anything
   // between 10' and 13'.
   const is12ftSpan = !uses20ftStl && span < 13 * 12 * IN && span > 10 * 12 * IN;
-  const king12Raw = useSingleHammerPieceGeom(kingBeam12Asset.url, is12ftSpan);
+  const king12Raw = useSingleHammerPieceGeom("king_beam_12", is12ftSpan);
   // The uploaded 12' king beam is authored with its origin offset from center
   // and below the truss frame. Center X/Z and put the bottom at Y = 0 so it
   // lands visibly in the truss-local frame.
@@ -4137,6 +3455,7 @@ function HammerTruss({
  *  and two diagonal struts from the king post base out to the rafters. */
 function KingTruss({
   span,
+  memberHeightIn = 6,
   z,
   baseY,
   peakY,
@@ -4160,6 +3479,7 @@ function KingTruss({
   peakPlateFace = 0,
 }: {
   span: number;
+  memberHeightIn?: number;
   z: number;
   baseY: number;
   peakY: number;
@@ -4187,7 +3507,7 @@ function KingTruss({
   // Dimensions from blueprint (3 1/2" x 7 1/4" timbers).
   const IN = 0.0254; // 1 inch in meters
   const thick = 5.5 * IN;   // Z depth (truss thickness)
-  const profile = 6 * IN; // member height in elevation
+  const profile = memberHeightIn * IN; // member height in elevation
 
 
   // King post sits 1mm inside the tie/rafter plane; struts sit a further 1mm
@@ -4195,18 +3515,18 @@ function KingTruss({
   const inset = 0.001;
   const kingThick = thick - 2 * inset;
   const strutThick = kingThick - 2 * inset;
-  const strutProfile = 5.5 * IN;
+  const strutProfile = (memberHeightIn - 0.5) * IN;
   const half = span / 2;
   const rise = peakY - baseY;
   const pitchAngle = Math.atan2(rise, half);
   const tail = 12 * 0.0254;
   const is12ftSpan = span < 13 * 12 * IN && span > 10 * 12 * IN;
-  const king12Raw = useSingleHammerPieceGeom(kingBeam12Asset.url, is12ftSpan);
+  const king12Raw = useSingleHammerPieceGeom("king_beam_12", is12ftSpan);
   // King-truss plate geometries (loaded once, mirrored arch-style across faces).
-  const peakPlateGeom = useSingleHammerPieceGeom(kingPeakPlateAsset.url, plates);
-  const heelPlateGeom = useSingleHammerPieceGeom(kingVPlateAsset.url, plates);
-  const webPlateGeom  = useSingleHammerPieceGeom(kingWebPlateAsset.url, plates);
-  const heelPlate2Geom = useSingleHammerPieceGeom(kingHeelPlate2Asset.url, plates);
+  const peakPlateGeom = useSingleHammerPieceGeom("king_peak_plate", plates);
+  const heelPlateGeom = useSingleHammerPieceGeom("truss_plateV2", plates);
+  const webPlateGeom  = useSingleHammerPieceGeom("king_web_plate", plates);
+  const heelPlate2Geom = useSingleHammerPieceGeom("king_heel_plate2", plates);
   // Geometry-local bounding-box centers so rotation pivots around each plate's own center.
   const centerOf = (g: THREE.BufferGeometry | undefined | null): [number, number, number] => {
     if (!g) return [0, 0, 0];
@@ -4521,7 +3841,7 @@ export const DEFAULT_SHINGLE_CAP_TEXTURE_SCALE: ShingleCapTextureScale = { x: 1,
 export const ShingleCapTextureScaleContext = createContext<ShingleCapTextureScale>(DEFAULT_SHINGLE_CAP_TEXTURE_SCALE);
 
 
-export function Pavilion({ config, showRoof = true, showTrusses = true, showFrame = true, showRafters = true, grainAdjust, grainPieces, grainFaces, handPeeledRandom = DEFAULT_HAND_PEELED_RANDOM, scrollCapRotation = DEFAULT_SCROLL_CAP_ROTATION, rakeTrimAdjust = DEFAULT_RAKE_TRIM_ADJUST, metalRakeTrimAdjust = DEFAULT_METAL_RAKE_TRIM_ADJUST, backRakeRotate = DEFAULT_BACK_RAKE_ROTATE, backRakeRotation = DEFAULT_BACK_RAKE_ROTATION, shingleScale = 1, shingleContrast = 1.55, shingleBrightness = 0.92, shingleSaturate = 1.05, shingleBumpScale = 1.2, shingleRoughness = 0.95, shingleCapRotation = 0, shingleCapScale = DEFAULT_SHINGLE_CAP_SCALE, shingleCapOffset = DEFAULT_SHINGLE_CAP_OFFSET, shingleCapTextureScale = DEFAULT_SHINGLE_CAP_TEXTURE_SCALE, hammerYOffset = 0, hammerScale = { x: 1, y: 1, z: 1 }, hammerGroupOffset = { x: 0, y: 0, z: 0 }, hammerCorbelScale = { x: 1, y: 1, z: 1 }, hammerCorbelOffset = { x: 0, y: 0, z: 0 }, hammerCorbelRotation = { x: 0, y: 0, z: 0 }, hammerPieceOffsets, hammerPieceScales, hammerUniformProfile55 = false, hammer12Glb = HAMMER12_GLB_DEFAULT_ADJUST, hammer14Glb = HAMMER14_GLB_DEFAULT_ADJUST, hammer16Glb = HAMMER16_GLB_DEFAULT_ADJUST, hammer20Glb = HAMMER20_GLB_DEFAULT_ADJUST, plateOffset = { x: 0, y: 0, z: 0 }, plateRotation = { x: 0, y: 0, z: 0 }, plateSizeScale = 1, webPlateOffset = { x: 0, y: 0, z: 0 }, webPlateRotation = { x: 0, y: 0, z: 0 }, webPlateSizeScale = 1, vPlateSurfaceInset = 0, webPlateSurfaceInset = 0, peakPlateOffset = { x: 0, y: 0, z: 0 }, peakPlateRotation = { x: 0, y: 0, z: 0 }, peakPlateSizeScale = 1, peakPlateSurfaceInset = 0, archPlateOffset = { x: 0, y: 0, z: 0 }, archPlateRotation = { x: 0, y: 0, z: 0 }, archPlateSizeScale = { x: 1, y: 1, z: 1 }, simplePlateOffset = { x: 0, y: 0, z: 0 }, simplePlateRotation = { x: 0, y: 0, z: 0 }, simplePlateSizeScale = { x: 1, y: 1, z: 1 }, topPlateOffset = { x: 0, y: 0, z: 0 }, topPlateRotation = { x: 0, y: 0, z: 0 }, topPlateSizeScale = { x: 1, y: 1, z: 1 }, webPlate2Offset = { x: 0, y: 0, z: 0 }, webPlate2Rotation = { x: 0, y: 0, z: 0 }, webPlate2SizeScale = { x: 1, y: 1, z: 1 }, kingPeakPlateOffset = { x: 0, y: 0, z: 0 }, kingPeakPlateRotation = { x: 0, y: 0, z: 0 }, kingPeakPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlateOffset = { x: 0, y: 0, z: 0 }, kingHeelPlateRotation = { x: 0, y: 0, z: 0 }, kingHeelPlateSizeScale = { x: 1, y: 1, z: 1 }, kingWebPlateOffset = { x: 0, y: 0, z: 0 }, kingWebPlateRotation = { x: 0, y: 0, z: 0 }, kingWebPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlate2Offset = { x: 0, y: 0, z: 0 }, kingHeelPlate2Rotation = { x: 0, y: 0, z: 0 }, kingHeelPlate2SizeScale = { x: 1, y: 1, z: 1 }, trussPlateExtraOffsets, pavilionStain = null, deckStain = null, stainOpacity = 0.9, stainDarkness = 0.3, rawBeamColor = NATURAL_PINE_BEAM, rawDeckColor = NATURAL_PINE_DECK, roofOnlyLiftIn = 0, onRootMount, onGrainPick, pieceAdjusts }: { config: PavilionConfig; showRoof?: boolean; showTrusses?: boolean; showFrame?: boolean; showRafters?: boolean; grainAdjust?: GrainAdjust; grainPieces?: GrainPieceAdjust; grainFaces?: GrainFaceAdjust; handPeeledRandom?: HandPeeledRandom; scrollCapRotation?: ScrollCapRotation; rakeTrimAdjust?: RakeTrimAdjust; metalRakeTrimAdjust?: RakeTrimAdjust; backRakeRotate?: boolean; backRakeRotation?: BackRakeRotation; shingleScale?: number; shingleContrast?: number; shingleBrightness?: number; shingleSaturate?: number; shingleBumpScale?: number; shingleRoughness?: number; shingleCapRotation?: number; shingleCapScale?: ShingleCapScale; shingleCapOffset?: ShingleCapOffset; shingleCapTextureScale?: ShingleCapTextureScale; hammerYOffset?: number; hammerScale?: { x: number; y: number; z: number }; hammerGroupOffset?: { x: number; y: number; z: number }; hammerCorbelScale?: { x: number; y: number; z: number }; hammerCorbelOffset?: { x: number; y: number; z: number }; hammerCorbelRotation?: { x: number; y: number; z: number }; hammerPieceOffsets?: Record<string, { x: number; y: number; z: number }>; hammerPieceScales?: Record<string, { x: number; y: number; z: number }>; hammerUniformProfile55?: boolean; hammer12Glb?: Hammer12GlbAdjust; hammer14Glb?: Hammer14GlbAdjust; hammer16Glb?: Hammer16GlbAdjust; hammer20Glb?: Hammer20GlbAdjust; plateOffset?: { x: number; y: number; z: number }; plateRotation?: { x: number; y: number; z: number }; plateSizeScale?: number; webPlateOffset?: { x: number; y: number; z: number }; webPlateRotation?: { x: number; y: number; z: number }; webPlateSizeScale?: number; vPlateSurfaceInset?: number; webPlateSurfaceInset?: number; peakPlateOffset?: { x: number; y: number; z: number }; peakPlateRotation?: { x: number; y: number; z: number }; peakPlateSizeScale?: number; peakPlateSurfaceInset?: number; archPlateOffset?: { x: number; y: number; z: number }; archPlateRotation?: { x: number; y: number; z: number }; archPlateSizeScale?: { x: number; y: number; z: number }; simplePlateOffset?: { x: number; y: number; z: number }; simplePlateRotation?: { x: number; y: number; z: number }; simplePlateSizeScale?: { x: number; y: number; z: number }; topPlateOffset?: { x: number; y: number; z: number }; topPlateRotation?: { x: number; y: number; z: number }; topPlateSizeScale?: { x: number; y: number; z: number }; webPlate2Offset?: { x: number; y: number; z: number }; webPlate2Rotation?: { x: number; y: number; z: number }; webPlate2SizeScale?: { x: number; y: number; z: number }; kingPeakPlateOffset?: { x: number; y: number; z: number }; kingPeakPlateRotation?: { x: number; y: number; z: number }; kingPeakPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlateOffset?: { x: number; y: number; z: number }; kingHeelPlateRotation?: { x: number; y: number; z: number }; kingHeelPlateSizeScale?: { x: number; y: number; z: number }; kingWebPlateOffset?: { x: number; y: number; z: number }; kingWebPlateRotation?: { x: number; y: number; z: number }; kingWebPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlate2Offset?: { x: number; y: number; z: number }; kingHeelPlate2Rotation?: { x: number; y: number; z: number }; kingHeelPlate2SizeScale?: { x: number; y: number; z: number }; trussPlateExtraOffsets?: TrussPlateExtraOffsets; pavilionStain?: string | null; deckStain?: string | null; stainOpacity?: number; stainDarkness?: number; rawBeamColor?: string; rawDeckColor?: string; roofOnlyLiftIn?: number; onRootMount?: (g: THREE.Group | null) => void; onGrainPick?: (key: string, label: string) => void; pieceAdjusts?: Record<string, PieceAdjust> }) {
+export function Pavilion({ config, showRoof = true, showTrusses = true, showFrame = true, showRafters = true, grainAdjust, grainPieces, grainFaces, handPeeledRandom = DEFAULT_HAND_PEELED_RANDOM, scrollCapRotation = DEFAULT_SCROLL_CAP_ROTATION, rakeTrimAdjust = DEFAULT_RAKE_TRIM_ADJUST, metalRakeTrimAdjust = DEFAULT_METAL_RAKE_TRIM_ADJUST, backRakeRotate = DEFAULT_BACK_RAKE_ROTATE, backRakeRotation = DEFAULT_BACK_RAKE_ROTATION, shingleScale = 1, shingleContrast = 1.55, shingleBrightness = 0.92, shingleSaturate = 1.05, shingleBumpScale = 1.2, shingleRoughness = 0.95, shingleCapRotation = 0, shingleCapScale = DEFAULT_SHINGLE_CAP_SCALE, shingleCapOffset = DEFAULT_SHINGLE_CAP_OFFSET, shingleCapTextureScale = DEFAULT_SHINGLE_CAP_TEXTURE_SCALE, hammerYOffset = 0, hammerScale = { x: 1, y: 1, z: 1 }, hammerGroupOffset = { x: 0, y: 0, z: 0 }, hammerCorbelScale = { x: 1, y: 1, z: 1 }, hammerCorbelOffset = { x: 0, y: 0, z: 0 }, hammerCorbelRotation = { x: 0, y: 0, z: 0 }, hammerPieceOffsets, hammerPieceScales, hammerUniformProfile55 = false, hammer12Glb = HAMMER12_GLB_DEFAULT_ADJUST, hammer14Glb = HAMMER14_GLB_DEFAULT_ADJUST, hammer16Glb = HAMMER16_GLB_DEFAULT_ADJUST, hammer20Glb = HAMMER20_GLB_DEFAULT_ADJUST, plateOffset = { x: 0, y: 0, z: 0 }, plateRotation = { x: 0, y: 0, z: 0 }, plateSizeScale = 1, webPlateOffset = { x: 0, y: 0, z: 0 }, webPlateRotation = { x: 0, y: 0, z: 0 }, webPlateSizeScale = 1, vPlateSurfaceInset = 0, webPlateSurfaceInset = 0, peakPlateOffset = { x: 0, y: 0, z: 0 }, peakPlateRotation = { x: 0, y: 0, z: 0 }, peakPlateSizeScale = 1, peakPlateSurfaceInset = 0, archPlateOffset = { x: 0, y: 0, z: 0 }, archPlateRotation = { x: 0, y: 0, z: 0 }, archPlateSizeScale = { x: 1, y: 1, z: 1 }, simplePlateOffset = { x: 0, y: 0, z: 0 }, simplePlateRotation = { x: 0, y: 0, z: 0 }, simplePlateSizeScale = { x: 1, y: 1, z: 1 }, topPlateOffset = { x: 0, y: 0, z: 0 }, topPlateRotation = { x: 0, y: 0, z: 0 }, topPlateSizeScale = { x: 1, y: 1, z: 1 }, webPlate2Offset = { x: 0, y: 0, z: 0 }, webPlate2Rotation = { x: 0, y: 0, z: 0 }, webPlate2SizeScale = { x: 1, y: 1, z: 1 }, kingPeakPlateOffset = { x: 0, y: 0, z: 0 }, kingPeakPlateRotation = { x: 0, y: 0, z: 0 }, kingPeakPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlateOffset = { x: 0, y: 0, z: 0 }, kingHeelPlateRotation = { x: 0, y: 0, z: 0 }, kingHeelPlateSizeScale = { x: 1, y: 1, z: 1 }, kingWebPlateOffset = { x: 0, y: 0, z: 0 }, kingWebPlateRotation = { x: 0, y: 0, z: 0 }, kingWebPlateSizeScale = { x: 1, y: 1, z: 1 }, kingHeelPlate2Offset = { x: 0, y: 0, z: 0 }, kingHeelPlate2Rotation = { x: 0, y: 0, z: 0 }, kingHeelPlate2SizeScale = { x: 1, y: 1, z: 1 }, trussPlateExtraOffsets, pavilionStain = null, deckStain = null, stainOpacity = 0.9, stainDarkness = 0.3, rawBeamColor = NATURAL_PINE_BEAM, rawDeckColor = NATURAL_PINE_DECK, roofOnlyLiftIn = 0, onRootMount, onGrainPick, pieceAdjusts }: { config: PavilionConfig; showRoof?: boolean; showTrusses?: boolean; showFrame?: boolean; showRafters?: boolean; grainAdjust?: GrainAdjust; grainPieces?: GrainPieceAdjust; grainFaces?: GrainFaceAdjust; handPeeledRandom?: HandPeeledRandom; scrollCapRotation?: ScrollCapRotation; rakeTrimAdjust?: RakeTrimAdjust; metalRakeTrimAdjust?: RakeTrimAdjust; backRakeRotate?: boolean; backRakeRotation?: BackRakeRotation; shingleScale?: number; shingleContrast?: number; shingleBrightness?: number; shingleSaturate?: number; shingleBumpScale?: number; shingleRoughness?: number; shingleCapRotation?: number; shingleCapScale?: ShingleCapScale; shingleCapOffset?: ShingleCapOffset; shingleCapTextureScale?: ShingleCapTextureScale; hammerYOffset?: number; hammerScale?: { x: number; y: number; z: number }; hammerGroupOffset?: { x: number; y: number; z: number }; hammerCorbelScale?: { x: number; y: number; z: number }; hammerCorbelOffset?: { x: number; y: number; z: number }; hammerCorbelRotation?: { x: number; y: number; z: number }; hammerPieceOffsets?: Record<string, { x: number; y: number; z: number }>; hammerPieceScales?: Record<string, { x: number; y: number; z: number }>; hammerUniformProfile55?: boolean; hammer12Glb?: Hammer12Adjust; hammer14Glb?: Hammer14Adjust; hammer16Glb?: Hammer16Adjust; hammer20Glb?: Hammer20Adjust; plateOffset?: { x: number; y: number; z: number }; plateRotation?: { x: number; y: number; z: number }; plateSizeScale?: number; webPlateOffset?: { x: number; y: number; z: number }; webPlateRotation?: { x: number; y: number; z: number }; webPlateSizeScale?: number; vPlateSurfaceInset?: number; webPlateSurfaceInset?: number; peakPlateOffset?: { x: number; y: number; z: number }; peakPlateRotation?: { x: number; y: number; z: number }; peakPlateSizeScale?: number; peakPlateSurfaceInset?: number; archPlateOffset?: { x: number; y: number; z: number }; archPlateRotation?: { x: number; y: number; z: number }; archPlateSizeScale?: { x: number; y: number; z: number }; simplePlateOffset?: { x: number; y: number; z: number }; simplePlateRotation?: { x: number; y: number; z: number }; simplePlateSizeScale?: { x: number; y: number; z: number }; topPlateOffset?: { x: number; y: number; z: number }; topPlateRotation?: { x: number; y: number; z: number }; topPlateSizeScale?: { x: number; y: number; z: number }; webPlate2Offset?: { x: number; y: number; z: number }; webPlate2Rotation?: { x: number; y: number; z: number }; webPlate2SizeScale?: { x: number; y: number; z: number }; kingPeakPlateOffset?: { x: number; y: number; z: number }; kingPeakPlateRotation?: { x: number; y: number; z: number }; kingPeakPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlateOffset?: { x: number; y: number; z: number }; kingHeelPlateRotation?: { x: number; y: number; z: number }; kingHeelPlateSizeScale?: { x: number; y: number; z: number }; kingWebPlateOffset?: { x: number; y: number; z: number }; kingWebPlateRotation?: { x: number; y: number; z: number }; kingWebPlateSizeScale?: { x: number; y: number; z: number }; kingHeelPlate2Offset?: { x: number; y: number; z: number }; kingHeelPlate2Rotation?: { x: number; y: number; z: number }; kingHeelPlate2SizeScale?: { x: number; y: number; z: number }; trussPlateExtraOffsets?: TrussPlateExtraOffsets; pavilionStain?: string | null; deckStain?: string | null; stainOpacity?: number; stainDarkness?: number; rawBeamColor?: string; rawDeckColor?: string; roofOnlyLiftIn?: number; onRootMount?: (g: THREE.Group | null) => void; onGrainPick?: (key: string, label: string) => void; pieceAdjusts?: Record<string, PieceAdjust> }) {
   const pavRootRef = useRef<THREE.Group | null>(null);
 
   // Species stays Eastern White Pine; the selected finish changes tooling relief.
@@ -4541,12 +3861,15 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   // config.length = center-to-center distance between end posts along Z
   // (i.e. how far apart the vertical beams are). config.width remains
   // outside-to-outside between perimeter posts on the X axis.
+  const frame = expandedFrame(config.width, config.length);
+  const layout = pavilionStations(config.width, config.length);
   const POST_THICK = 7.5 * 0.0254; // matches Post geometry (8" square)
   const postOffset = 0.15;
   const w = config.width * FT + 2 * postOffset - POST_THICK; // X
   const l = config.length * FT + 2 * postOffset; // Z — post centers at ±config.length*FT/2
   // Girder beams: 8" x 8", resting on top of the posts.
-  const beamT = 7.5 * 0.0254; // 8 inches
+  const beamWidth = ((frame?.girderIn[0] ?? 8) - 0.5) * 0.0254;
+  const beamT = ((frame?.girderIn[1] ?? 8) - 0.5) * 0.0254; // 8 inches
   // `config.height` is the distance from the ground to the TOP of the
   // vertical post + girder assembly (i.e. top of girder beam). Subtract the
   // girder thickness so the post (vertical beam) terminates at that height.
@@ -4554,9 +3877,9 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   const scrollEnd = useScrollEndGeometry(beamT);
   const girderOverhang = 14 * 0.0254;
   const girderLen = l - postOffset * 2 + girderOverhang * 2 - 1 * 0.0254;
-  const girderAssetUrl = girderBeamAsset.url;
-  const girderGeom = useGirderBeamGeometry(beamT, girderLen, girderAssetUrl);
-  const girderCap = useGirderCapGeometry(beamT);
+  const girderAssetUrl = "scroll_cut_girder_beam";
+  const girderGeom = useGirderBeamGeometry(beamWidth, girderLen, girderAssetUrl);
+  const girderCap = useGirderCapGeometry(beamWidth);
   const showGirderCaps = girderLen > 400 * 0.0254;
 
   const corners: [number, number][] = [
@@ -4566,13 +3889,13 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
     [w / 2 - postOffset, l / 2 - postOffset],
   ];
 
-  // Center posts on each long side when length exceeds 16'
-  const centerPosts: [number, number][] = config.length > 16
-    ? [
-        [-w / 2 + postOffset, 0],
-        [w / 2 - postOffset, 0],
-      ]
-    : [];
+  const centerPosts: [number, number][] = layout.postZ.slice(1, -1).flatMap(z => [
+    [-w / 2 + postOffset, z * FT] as [number, number],
+    [w / 2 - postOffset, z * FT] as [number, number],
+  ]);
+  const trussPosts = centerPosts.filter(([,z]) => layout.trussZ.some(t => Math.abs(t * FT - z) < 0.001));
+  // The 20×36 takeoff specifies 14 braces: quarter-point posts are unbraced.
+  const bracedPosts = frame?.braces === 14 && frame.posts === 10 ? trussPosts : centerPosts;
 
   // Top beams (ring)
   const beamY = h + beamT / 2; // bottom of beam sits on top of post
@@ -4593,7 +3916,9 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   // Lift roof so its underside sits on top of the truss/rafter top edges.
   // Rafters seat on top of the girder (lift = beamT/2 above beamY), and the
   // rafter top edge is rafterT / cos(angle) above the rafter seat.
-  const rafterT = 6 * 0.0254; // matches truss/rafter profile (7.25")
+  // Sheet profiles describe the King package; alternate styles retain their authored geometry.
+  const rafterHeightIn = frame && (config.truss === "king" || config.truss === "none") ? frame.rafterIn[1] : 6;
+  const rafterT = rafterHeightIn * 0.0254;
   const slopeLen = Math.hypot(1, pitch);
   // Raise the trusses + rafters as one piece so the birdsmouth notch can be
   // shallower while still seating on top of the girder. ~2" lift.
@@ -4741,7 +4066,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
                   color={wood}
                 />,
               ]).concat(
-                centerPosts.flatMap(([x, z], i) => [
+                bracedPosts.flatMap(([x, z], i) => [
                   <ArchedBrace
                     key={`cbz+-${i}`}
                     postX={x}
@@ -4780,7 +4105,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
           {config.length >= 26 && config.post !== "brace" && centerPosts.length > 0 && (() => {
             const braceDiagM = (51 * 0.0254) * (config.braceScale ?? 1);
             const rafterBottomY = beamY + beamT / 2 + TRUSS_LIFT - ROOF_DROP + 1 * 0.0254;
-            return centerPosts.flatMap(([x, z], i) => [
+            return bracedPosts.flatMap(([x, z], i) => [
               <ArchedBrace
                 key={`mtb+-${i}`}
                 postX={x}
@@ -4812,12 +4137,12 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
               front/back gable braces (lines ~4227) at the center posts so
               the middle truss has the same corbel support. Hammer & King
               only (Arch hides its gable corbels by design). Length >= 28'. */}
-          {config.length >= 28 && centerPosts.length > 0 &&
+          {layout.trussZ.length > 2 && trussPosts.length > 0 &&
             (config.truss === "hammer" || config.truss === "king") &&
             (() => {
               const braceDiagM = (51 * 0.0254) * (config.braceScale ?? 1);
               const rafterBottomY = beamY + beamT / 2 + TRUSS_LIFT - ROOF_DROP + 1 * 0.0254;
-              return centerPosts.map(([x, z], i) => (
+              return trussPosts.map(([x, z], i) => (
                 <ArchedBrace
                   key={`mtbw-${i}`}
                   postX={x}
@@ -4843,7 +4168,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
           const usable = l - postOffset * 2;
           // Two end trusses for short pavilions; add a single middle truss
           // (3 total) once the pavilion reaches 26 ft or longer.
-          const bays = config.length >= 26 ? 2 : 1;
+          const bays = layout.trussZ.length - 1;
           const count = bays + 1;
           const step = usable / bays;
           const z0 = -l / 2 + postOffset;
@@ -4885,10 +4210,10 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
                 config.width >= 20
               ) {
                 const GlbTruss =
-                  config.width === 12 ? Hammer12GlbTruss :
-                  config.width === 14 ? Hammer14GlbTruss :
-                  config.width === 16 ? Hammer16GlbTruss :
-                  Hammer20GlbTruss; // 20, 24, 28, 32 → largest hand-modeled truss, auto-fit
+                  config.width === 12 ? Hammer12Truss :
+                  config.width === 14 ? Hammer14Truss :
+                  config.width === 16 ? Hammer16Truss :
+                  Hammer20Truss; // 20, 24, 28, 32 → largest hand-modeled truss, auto-fit
                 const glbAdjust =
                   config.width === 12 ? hammer12Glb :
                   config.width === 14 ? hammer14Glb :
@@ -4923,7 +4248,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
               }
               return <HammerTruss key={`ht-${i}`} {...common} yOffset={hammerYOffset} scaleX={hammerScale.x} scaleY={hammerScale.y} scaleZ={hammerScale.z} groupOffset={hammerGroupOffset} corbelScale={hammerCorbelScale} corbelOffset={hammerCorbelOffset} corbelRotation={hammerCorbelRotation} pieceOffsets={hammerPieceOffsets} pieceScales={hammerPieceScales} uniformProfile55={hammerUniformProfile55} useDedicated20Stl={config.width === 20} borrowAll20Pieces={false} plateOffset={plateOffset} plateRotation={plateRotation} plateSizeScale={plateSizeScale} webPlateOffset={webPlateOffset} webPlateRotation={webPlateRotation} webPlateSizeScale={webPlateSizeScale} vPlateSurfaceInset={vPlateSurfaceInset} webPlateSurfaceInset={webPlateSurfaceInset} peakPlateOffset={peakPlateOffset} peakPlateRotation={peakPlateRotation} peakPlateSizeScale={peakPlateSizeScale} peakPlateSurfaceInset={peakPlateSurfaceInset} plateExtraOffsets={trussPlateExtraOffsets} showPeakPlate={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
             }
-            return <KingTruss key={`kt-${i}`} {...common} peakPlateOffset={kingPeakPlateOffset} peakPlateRotation={kingPeakPlateRotation} peakPlateSizeScale={kingPeakPlateSizeScale} heelPlateOffset={kingHeelPlateOffset} heelPlateRotation={kingHeelPlateRotation} heelPlateSizeScale={kingHeelPlateSizeScale} webJointPlateOffset={kingWebPlateOffset} webJointPlateRotation={kingWebPlateRotation} webJointPlateSizeScale={kingWebPlateSizeScale} heelPlate2Offset={kingHeelPlate2Offset} heelPlate2Rotation={kingHeelPlate2Rotation} heelPlate2SizeScale={kingHeelPlate2SizeScale} isOuter={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
+            return <KingTruss key={`kt-${i}`} {...common} memberHeightIn={rafterHeightIn} peakPlateOffset={kingPeakPlateOffset} peakPlateRotation={kingPeakPlateRotation} peakPlateSizeScale={kingPeakPlateSizeScale} heelPlateOffset={kingHeelPlateOffset} heelPlateRotation={kingHeelPlateRotation} heelPlateSizeScale={kingHeelPlateSizeScale} webJointPlateOffset={kingWebPlateOffset} webJointPlateRotation={kingWebPlateRotation} webJointPlateSizeScale={kingWebPlateSizeScale} heelPlate2Offset={kingHeelPlate2Offset} heelPlate2Rotation={kingHeelPlate2Rotation} heelPlate2SizeScale={kingHeelPlate2SizeScale} isOuter={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
           });
         })()}
 
@@ -4932,42 +4257,28 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
         (() => {
           const IN = 0.0254;
           const thick = 5.5 * IN;
-          const profile = 6 * IN;
+          const profile = rafterT;
           // Compute truss positions (must match the truss loop above) and
           // evenly distribute rafters at ~4 ft on center within each bay
           // between trusses, so spacing is uniform up to the outside trusses.
-          const trussUsable = l - postOffset * 2;
-          const trussBays = config.length >= 26 ? 2 : 1;
-          const trussCount = trussBays + 1;
-          const trussStep = trussUsable / trussBays;
-          const trussZ0 = -l / 2 + postOffset;
-          const trussZs = Array.from({ length: trussCount }, (_, i) => trussZ0 + trussStep * i);
-          const spacing = 4 * FT;
           const half = trussSpan / 2;
-          const tail = 12 * 0.0254;
+          const tail = 12 * IN;
           const rise = ridgeH;
           const pitchAngle = Math.atan2(rise, half);
           const baseY = beamY + beamT / 2 + TRUSS_LIFT - ROOF_DROP;
-          const rafterZs: number[] = [];
-          for (let b = 0; b < trussCount - 1; b++) {
-            const zA = trussZs[b];
-            const zB = trussZs[b + 1];
-            const bayLen = zB - zA;
-            const divs = Math.max(2, Math.round(bayLen / spacing));
-            const dz = bayLen / divs;
-            for (let k = 1; k < divs; k++) rafterZs.push(zA + dz * k);
-          }
+          const rafterZs = layout.rafterZ.map(z => z * FT);
           // Collar tie: 84" long for the 10' pavilion. Derive height on the
           // rafter from the requested length so the ends touch the rafters.
-          const collarSize = 6 * IN;
-          const collarLen = 84 * IN;
+          const collarSize = (frame?.collarIn[1] ?? 6) * IN;
+          const cutDx = collarSize / Math.tan(pitchAngle);
+          // Finished bevels stay inside the listed stock length.
+          const collarLen = frame ? frame.collarStockFt * FT - cutDx : 84 * IN;
           // rafter inner-face x at height y = half * (1 - y/rise)
           // collar half-length at midheight = collarLen/2 ⇒ collarT = 1 - (collarLen/2)/half
           const collarT = Math.min(0.9, Math.max(0.1, 1 - (collarLen / 2) / half));
           const collarY = rise * collarT - 3.5 * IN;
           // Angled end cut parallel to rafter slope: top end is shorter,
           // bottom end is longer (rafter rises moving inward).
-          const cutDx = collarSize / Math.tan(pitchAngle); // dx across full collar height
           const halfTop = (collarLen - cutDx) / 2;
           const halfBot = (collarLen + cutDx) / 2;
           const hh = collarSize / 2;
@@ -5013,7 +4324,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
       {showTrusses && config.roof === "gable" && config.gableFascia && (() => {
         const IN = 0.0254;
         const fasciaDepth = 2 * IN; // 2" wide along Z
-        const profile = 6 * IN;
+        const profile = rafterT;
         const half = trussSpan / 2;
         const tail = config.gableOverhang ? 12 * IN : 0;
         const rise = ridgeH;
@@ -5052,7 +4363,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
           arc down to the bottom edge). */}
       {showFrame && (() => {
         const renderBeam = (xPos: number) => (
-          <group position={[xPos, beamY, 0]} rotation={[0, -Math.PI / 2, 0]}>
+          <group position={[xPos, beamY, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[1, beamT / beamWidth, 1]}>
             <mesh geometry={girderGeom} castShadow>
               <WoodMaterial color={wood} roughness={0.8} category="beam" rotation={Math.PI * 1.5} singleMaterial />
             </mesh>
@@ -5081,14 +4392,14 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
           the end (interior) trusses, top flush with the peak. */}
       {showTrusses && config.roof === "gable" && config.truss !== "none" && !config.hideBackTruss && (() => {
         const IN = 0.0254;
-        const ridgeW = 3.5 * IN;   // X
-        const ridgeH_ = 7.25 * IN; // Y
+        const ridgeW = frame ? (frame.ridgeIn[0] - 0.5) * IN : 3.5 * IN;   // X
+        const ridgeH_ = frame ? (frame.ridgeIn[1] - 0.75) * IN : 7.25 * IN; // Y
         const trussThick = 5.5 * IN;
         const usable = l - postOffset * 2;
         const ridgeLen = usable - trussThick; // inside face to inside face
         const peakY = beamY + beamT / 2 + TRUSS_LIFT - ROOF_DROP + ridgeH;
         return (
-          <mesh position={[0, peakY - ridgeH_ / 2 + 3 * IN, 0]} castShadow receiveShadow>
+          <mesh position={[0, peakY - ridgeH_ / 2 + rafterT / 2, 0]} castShadow receiveShadow>
             <boxGeometry args={[ridgeW, ridgeH_, ridgeLen]} />
             <WoodMaterial color={wood} category="beam" piece="ridge" />
           </mesh>
@@ -5530,5 +4841,3 @@ function FlatRoof({
     </group>
   );
 }
-
-
