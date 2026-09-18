@@ -9,7 +9,7 @@ import { useLoader } from "@react-three/fiber";
 import { PieceAdjuster, type PieceAdjust } from "./PieceAdjuster";
 
 import * as THREE from "three";
-import { createPartGeometry, createHammerMembers } from "./procedural-geometry";
+import { createPartGeometry, createHammerMembers, createGirderGeometry } from "./procedural-geometry";
 import type { PavilionConfig } from "@/lib/pavilion-config";
 import { WOOD_FINISHES, ROOF_MATERIALS } from "@/lib/pavilion-config";
 import shingleTextureAsset from "@/assets/shingle_tile.jpg.asset.json";
@@ -103,68 +103,6 @@ function useScrollEndGeometry(targetCrossSection: number) {
       const y = pos.getY(i);
       uv[i * 2] = x / lenX + 0.5;
       uv[i * 2 + 1] = y / lenY + 0.5;
-    }
-    g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-    g.computeVertexNormals();
-    g.computeBoundingBox();
-    return { geometry: g, length: lenX };
-  }, [raw, targetCrossSection]);
-}
-
-/** Load the girder-beam STL once, scale Y/Z to match the beam's square
- *  cross-section, and scale X to the requested length. Geometry's local +X
- *  runs along the beam's length. */
-function useGirderBeamGeometry(targetCrossSection: number, targetLength: number, assetUrl: string = "scroll_cut_girder_beam") {
-  const raw = useMemo(() => createPartGeometry(assetUrl), [assetUrl]);
-  useEffect(() => () => raw.dispose(), [raw]);
-  return useMemo(() => {
-    const src = raw ?? new THREE.BoxGeometry(1, 1, 1);
-    const g = src.clone();
-    g.computeBoundingBox();
-    const bb = g.boundingBox!;
-    const sx = bb.max.x - bb.min.x;
-    const sy = bb.max.y - bb.min.y;
-    const sz = bb.max.z - bb.min.z;
-    g.translate(-(bb.min.x + sx / 2), -(bb.min.y + sy / 2), -(bb.min.z + sz / 2));
-    const sYfactor = targetCrossSection / sy;
-    const sZfactor = targetCrossSection / sz;
-    const sXfactor = targetLength / sx;
-    g.scale(sXfactor, sYfactor, sZfactor);
-    splitGeometryByFaceNormal(g, targetLength, targetCrossSection, targetCrossSection);
-    g.computeVertexNormals();
-    g.computeBoundingBox();
-    return g;
-  }, [raw, targetCrossSection, targetLength]);
-}
-
-/** Girder end cap: load STL, scale Y/Z to beam cross-section, scale X
- *  proportionally so the cap keeps its natural aspect. Local +X points
- *  outward from the beam end. */
-function useGirderCapGeometry(targetCrossSection: number) {
-  const raw = useMemo(() => createPartGeometry("girder_cap"), []);
-  useEffect(() => () => raw.dispose(), [raw]);
-  return useMemo(() => {
-    if (!raw) return null;
-    const g = raw.clone();
-    g.computeBoundingBox();
-    const bb = g.boundingBox!;
-    const sx = bb.max.x - bb.min.x;
-    const sy = bb.max.y - bb.min.y;
-    const sz = bb.max.z - bb.min.z;
-    g.translate(-(bb.min.x + sx / 2), -(bb.min.y + sy / 2), -(bb.min.z + sz / 2));
-    const sYfactor = targetCrossSection / sy;
-    const sZfactor = targetCrossSection / sz;
-    const sXfactor = Math.max(sYfactor, sZfactor);
-    g.scale(sXfactor, sYfactor, sZfactor);
-    const lenX = sx * sXfactor;
-    // Shift so the inner face (originally at local -X half) sits at x=0,
-    // and the cap extends to +X (outward from the beam).
-    g.translate(lenX / 2, 0, 0);
-    const pos = g.attributes.position as THREE.BufferAttribute;
-    const uv = new Float32Array(pos.count * 2);
-    for (let i = 0; i < pos.count; i++) {
-      uv[i * 2] = pos.getX(i) / lenX;
-      uv[i * 2 + 1] = pos.getY(i) / targetCrossSection + 0.5;
     }
     g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
     g.computeVertexNormals();
@@ -3903,10 +3841,8 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   const scrollEnd = useScrollEndGeometry(beamT);
   const girderOverhang = 14 * 0.0254;
   const girderLen = l - postOffset * 2 + girderOverhang * 2 - 1 * 0.0254;
-  const girderAssetUrl = "scroll_cut_girder_beam";
-  const girderGeom = useGirderBeamGeometry(beamWidth, girderLen, girderAssetUrl);
-  const girderCap = useGirderCapGeometry(beamWidth);
-  const showGirderCaps = girderLen > 400 * 0.0254;
+  const girderGeom = useMemo(() => createGirderGeometry(girderLen, beamWidth, beamT), [girderLen, beamWidth, beamT]);
+  useEffect(() => () => girderGeom.dispose(), [girderGeom]);
 
   const corners: [number, number][] = [
     [-w / 2 + postOffset, -l / 2 + postOffset],
@@ -4386,25 +4322,13 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
 
 
 
-      {/* Top beams along length (Z) on each side — extend 8" past each end post,
-          with a decorative scroll cut at each end (top reveal + concave quarter
-          arc down to the bottom edge). */}
+      {/* Continuous girders with matching scroll cuts at all four ends. */}
       {showFrame && (() => {
         const renderBeam = (xPos: number) => (
-          <group position={[xPos, beamY, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[1, beamT / beamWidth, 1]}>
+          <group position={[xPos, beamY, 0]} rotation={[0, -Math.PI / 2, 0]}>
             <mesh geometry={girderGeom} castShadow>
               <WoodMaterial color={wood} roughness={0.8} category="beam" rotation={Math.PI * 1.5} singleMaterial />
             </mesh>
-            {showGirderCaps && girderCap && (
-              <>
-                <mesh geometry={girderCap.geometry} position={[girderLen / 2, 0, 0]} castShadow>
-                  <WoodMaterial color={wood} roughness={0.8} category="beam" rotation={Math.PI * 1.5} singleMaterial />
-                </mesh>
-                <mesh geometry={girderCap.geometry} position={[-girderLen / 2, 0, 0]} rotation={[0, Math.PI, 0]} castShadow>
-                  <WoodMaterial color={wood} roughness={0.8} category="beam" rotation={Math.PI * 1.5} singleMaterial />
-                </mesh>
-              </>
-            )}
           </group>
         );
         return (

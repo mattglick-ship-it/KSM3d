@@ -12,6 +12,25 @@ type Drawing={axes:number[];depth:number[];paths:{start:number[];commands:(strin
 const survey=dimensions as Record<string,Bounds[]>;
 const drawings=profiles as unknown as Record<string,Drawing[]>;
 export const IN=.0254;
+/** One continuous girder, local X along its length. End cuts are sized from
+ * the timber section, so extending a pavilion never stretches the scrolls.
+ * The paired cuts share a level top and retain full bearing over the posts. */
+export function createGirderGeometry(length:number,width:number,height:number){
+ const half=length/2,top=height/2,bottom=-height/2;
+ const run=Math.min(height*.786,length/4),reveal=run*(.143/.786);
+ const lipX=half-reveal,heelX=half-run,lipY=top-height*.319;
+ const rise=lipY-bottom,k=.5522847498;
+ const s=new THREE.Shape();
+ s.moveTo(-half,top);s.lineTo(half,top);
+ s.lineTo(half,top-height*.21);s.lineTo(lipX,top-height*.21);s.lineTo(lipX,lipY);
+ s.bezierCurveTo(lipX-(lipX-heelX)*k,lipY,heelX,bottom+rise*k,heelX,bottom);
+ s.lineTo(-heelX,bottom);
+ s.bezierCurveTo(-heelX,bottom+rise*k,-lipX+(lipX-heelX)*k,lipY,-lipX,lipY);
+ s.lineTo(-lipX,top-height*.21);s.lineTo(-half,top-height*.21);s.closePath();
+ const geometry=new THREE.ExtrudeGeometry(s,{depth:width,bevelEnabled:false,curveSegments:32,steps:1});
+ geometry.translate(0,0,-width/2);geometry.computeBoundingBox();
+ return geometry;
+}
 export function polygon(points:number[][]){const s=new THREE.Shape();points.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));s.closePath();return s;}
 export function fitBounds(g:THREE.BufferGeometry,bounds:Bounds){
  g.computeBoundingBox();const b=g.boundingBox!,size=b.getSize(new THREE.Vector3()),min=b.min.clone();
