@@ -1,3 +1,4 @@
+import {createWideTruss,type WideTrussStyle} from './wide-truss-geometry';
 import {expandedFrame,pavilionStations} from '@/lib/pavilion-layout';
 import { configureTimberMaterial } from './timber-grain';
 import { snowGuardPositions, snowRailLength, snowRoofLength } from '@/lib/snow-retention';
@@ -2076,7 +2077,7 @@ function SteelVJointPlate({
   );
 }
 
-function RuntimeArchTruss({
+function SmallRuntimeArchTruss({
   span,
   z,
   baseY,
@@ -2168,7 +2169,7 @@ function RuntimeArchTruss({
   );
 }
 
-function RuntimeHammerTruss({
+function SmallRuntimeHammerTruss({
   span,
   z,
   baseY,
@@ -2266,6 +2267,27 @@ function RuntimeHammerTruss({
 
 
 
+function WideTruss({style,span,z,baseY,peakY,color,memberHeightIn=6,plates=false,seatLower=0,tailStyle="standard",isOuter=true,exteriorFace=1}: {
+  style:WideTrussStyle;span:number;z:number;baseY:number;peakY:number;color:string;memberHeightIn?:number;
+  plates?:boolean;seatLower?:number;tailStyle?:"standard"|"scroll";isOuter?:boolean;exteriorFace?:1|-1;
+}) {
+  const rise=peakY-baseY;
+  const model=useMemo(()=>createWideTruss(style,span,rise,memberHeightIn),[style,span,rise,memberHeightIn]);
+  useEffect(()=>()=>{model.members.forEach(m=>m.geometry.dispose());model.plates.forEach(p=>p.geometry.dispose());},[model]);
+  const pitchAngle=Math.atan(model.pitch),half=span/2,IN=.0254;
+  return <group name={`wide-${style}-truss`} position={[0,baseY,z]}>
+    {([-1,1] as const).map(side=><PlumbRafter key={side} iy={rise} outerX={half+16*IN} pitchAngle={pitchAngle} t={model.profile} depth={model.depth} side={side} color={color} seatX={half+4*IN} seatY={-seatLower} piece={`wide.${style}.rafter.${side<0?'l':'r'}`} tailStyle={tailStyle} parametricTail />)}
+    {model.members.map(m=><mesh key={m.id} geometry={m.geometry} castShadow receiveShadow><WoodMaterial color={color} category="truss" piece={m.id} singleMaterial /></mesh>)}
+    {plates&&model.plates.flatMap(p=>(p.peak?(isOuter?[exteriorFace]:[]):[1,-1]).map(face=><mesh key={p.id+face} geometry={p.geometry} position={[0,0,face*(model.depth/2+.125*IN+.0005)]} castShadow receiveShadow><meshStandardMaterial color="#141414" roughness={.4} metalness={.85}/></mesh>))}
+  </group>;
+}
+function RuntimeArchTruss(props:Omit<Parameters<typeof WideTruss>[0],'style'>) {
+  return <WideTruss {...props} style="arch" />;
+}
+function RuntimeHammerTruss({showPeakPlate=true,peakPlateFace=1,...props}:Omit<Parameters<typeof WideTruss>[0],'style'|'isOuter'|'exteriorFace'>&{showPeakPlate?:boolean;peakPlateFace?:1|-1|0}) {
+  return <WideTruss {...props} style="hammer" isOuter={showPeakPlate&&peakPlateFace!==0} exteriorFace={peakPlateFace===-1?-1:1} />;
+}
+
 function ArchedBrace({
   postX,
   postZ,
@@ -2332,6 +2354,7 @@ function PlumbRafter({
   seatY = 0,
   piece,
   tailStyle = "standard",
+  parametricTail = false,
 }: {
   iy: number;
   outerX: number;
@@ -2344,6 +2367,7 @@ function PlumbRafter({
   seatY?: number;
   piece?: string;
   tailStyle?: "standard" | "scroll";
+  parametricTail?: boolean;
 }) {
   const scrollGeom = useScrollCutRafterGeometry(outerX / Math.cos(pitchAngle), t, depth);
   const geom = useMemo(() => {
@@ -2451,7 +2475,7 @@ function PlumbRafter({
     }
     return g;
   }, [iy, outerX, pitchAngle, t, depth, side, seatX, seatY, tailStyle]);
-  if (tailStyle === "scroll") {
+  if (tailStyle === "scroll" && !parametricTail) {
     // Render the uploaded scroll-cut rafter STL in place of the procedural shape.
     // Peak/top-edge of the STL is at (0,0); pivot at the rafter's inner-top
     // corner (matches PlumbRafter's local frame), then mirror + rotate down.
@@ -3918,8 +3942,9 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   // Lift roof so its underside sits on top of the truss/rafter top edges.
   // Rafters seat on top of the girder (lift = beamT/2 above beamY), and the
   // rafter top edge is rafterT / cos(angle) above the rafter seat.
-  // Sheet profiles describe the King package; alternate styles retain their authored geometry.
-  const rafterHeightIn = frame && (frame.runtimeTruss || config.truss === "king" || config.truss === "none") ? frame.rafterIn[1] : 6;
+  // Wider alternate trusses share the sheet rafter section and roof envelope.
+  // The established 12–16-foot alternate drawings retain their original section.
+  const rafterHeightIn = frame && (config.width > 16 || frame.runtimeTruss || config.truss === "king" || config.truss === "none") ? frame.rafterIn[1] : 6;
   const rafterT = rafterHeightIn * 0.0254;
   const slopeLen = Math.hypot(1, pitch);
   // Raise the trusses + rafters as one piece so the birdsmouth notch can be
@@ -3975,7 +4000,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
       <PieceAdjuster
         rootRef={pavRootRef}
         adjusts={(() => {
-          const src = pieceAdjusts ?? {};
+          const src = config.width > 16 && (config.truss === "arch" || config.truss === "hammer") ? {} : pieceAdjusts ?? {};
           // Rafter pieces are only adjustable when scroll-cut tails are
           // selected. With standard tails, rafter positions stay baked.
           const filtered: Record<string, PieceAdjust> = {};
@@ -4191,20 +4216,19 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
               tailStyle: config.rafterTail,
             };
             if (config.truss === "arch") {
-              if (frame?.runtimeTruss || isLargeRuntimeSpan(common.span)) {
+              if (config.width > 16) {
                 return <RuntimeArchTruss key={`rat-${i}`} {...common} memberHeightIn={rafterHeightIn} plates={config.trussPlates} isOuter={i === 0 || i === count - 1} exteriorFace={i === 0 ? -1 : 1} />;
               }
+              if(frame?.runtimeTruss)return <SmallRuntimeArchTruss key={`sat-${i}`} {...common} memberHeightIn={rafterHeightIn} isOuter={i===0||i===count-1} exteriorFace={i===0?-1:1}/>;
               return <ArchTruss key={`at-${i}`} {...common} plates={config.trussPlates} archPlateOffset={archPlateOffset} archPlateRotation={archPlateRotation} archPlateSizeScale={archPlateSizeScale} simplePlateOffset={simplePlateOffset} simplePlateRotation={simplePlateRotation} simplePlateSizeScale={simplePlateSizeScale} topPlateOffset={topPlateOffset} topPlateRotation={topPlateRotation} topPlateSizeScale={topPlateSizeScale} webPlate2Offset={webPlate2Offset} webPlate2Rotation={webPlate2Rotation} webPlate2SizeScale={webPlate2SizeScale} isOuter={i === 0 || i === count - 1} exteriorFace={i === 0 ? -1 : 1} />;
             }
             if (config.truss === "hammer") {
-              if (frame?.runtimeTruss || isLargeRuntimeSpan(common.span)) {
+              if (config.width > 16) {
                 return <RuntimeHammerTruss key={`rht-${i}`} {...common} memberHeightIn={rafterHeightIn} plates={config.trussPlates} showPeakPlate={i === 0 || i === count - 1} peakPlateFace={i === 0 ? -1 : i === count - 1 ? 1 : 0} />;
               }
-              // Every hand-modeled hammer GLB auto-fits its widest horizontal
-              // axis to the requested `span`, so widths above 20′ (24/28/32)
-              // safely reuse the 20′ GLB stretched to the larger pavilion span
-              // instead of falling through to the older procedural truss which
-              // was never calibrated past ~16′.
+              if(frame?.runtimeTruss)return <SmallRuntimeHammerTruss key={`sht-${i}`} {...common} memberHeightIn={rafterHeightIn} showPeakPlate={i===0||i===count-1} peakPlateFace={i===0?-1:i===count-1?1:0}/>;
+              // Preserve the established small-span procedural drawings.
+              // Wider spans have already returned the connected WideTruss above.
               if (
                 config.width === 12 ||
                 config.width === 14 ||
@@ -4310,6 +4334,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
                   seatX={half + 4 * IN}
                   seatY={-TRUSS_LIFT}
                   piece={`side.rafter.${s === 1 ? "r" : "l"}`}
+                  parametricTail={config.width>16&&(config.truss==="arch"||config.truss==="hammer")}
                   tailStyle={config.rafterTail}
                 />
               ))}
@@ -4350,6 +4375,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
                   side={s as 1 | -1}
                   color={wood}
                   piece={`side.rafter.${s === 1 ? "r" : "l"}`}
+                  parametricTail={config.width>16&&(config.truss==="arch"||config.truss==="hammer")}
                   tailStyle={config.rafterTail}
                 />
               ))}

@@ -8,10 +8,11 @@ import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const sharp=require('sharp');
 require('./load-typescript.cjs');
+const {createWideTruss}=require('../components/pavilion/wide-truss-geometry.ts');
 const {createPartGeometry,createHammerScene}=require('../components/pavilion/procedural-geometry.ts');
 const source=readFileSync('components/pavilion/Pavilion3D.tsx','utf8');
 const ast=ts.createSourceFile('model.tsx',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
-const wanted=['KingTruss','ArchTruss','RuntimeArchTruss','RuntimeHammerTruss','BeamBetween','CurvedTimber','SteelRectPlate','SteelVJointPlate','PlumbRafter','SnowGuards','SeamRidges'];
+const wanted=['KingTruss','ArchTruss','RuntimeArchTruss','RuntimeHammerTruss','WideTruss','SmallRuntimeArchTruss','SmallRuntimeHammerTruss','BeamBetween','CurvedTimber','SteelRectPlate','SteelVJointPlate','PlumbRafter','SnowGuards','SeamRidges'];
 const functions=ast.statements.filter(s=>ts.isFunctionDeclaration(s)&&wanted.includes(s.name?.text)).map(s=>s.getText(ast)).join('\n');
 const jsx=(type,props,...children)=>({type,props:{...props,children}});
 const assets={};
@@ -19,7 +20,7 @@ for(const m of source.matchAll(/import (\w+) from "@\/assets\/([^\"]+)"/g))asset
 const loadPart=(id,enabled=true)=>{if(!enabled)return null;const geom=createPartGeometry(id);geom.scale(.0254,.0254,.0254);geom.computeBoundingBox();return{geom,axis:0}};
 const snowSource=readFileSync('lib/snow-retention.ts','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
 const snowGuardPositions=new Function(ts.transpileModule(snowSource,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText+';return snowGuardPositions;')();
-const env={snowGuardPositions,THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadPart,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
+const env={createWideTruss,useEffect:()=>{},snowGuardPositions,THREE,React:{createElement:jsx,Fragment:'fragment'},useMemo:fn=>fn(),useScrollCutRafterGeometry:()=>null,useSingleHammerPieceGeom:loadPart,WoodMaterial:p=>jsx('meshStandardMaterial',{color:'#deb87c',userData:{pieceKey:p.piece}}),contrastAccent:c=>c,...assets};
 const compiled=ts.transpileModule(functions,{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;
 const model=new Function(...Object.keys(env),compiled+`;return {${wanted.join(',')}};`)(...Object.values(env));
 function object(node){
@@ -75,7 +76,7 @@ async function render(root,path,roof=false){
  await sharp(pixels,{raw:{width:w,height:h,channels:3}}).resize(640).png().toFile(path);console.log(path,count,'faces');
 }
 mkdirSync('public/truss-icons',{recursive:true});
-const expandedOnly=process.argv.includes('--expanded-only');
+const expandedOnly=process.argv.includes('--expanded-only')||process.argv.includes('--wide-only');
 for(const width of (expandedOnly?[]:[12,14,16,20]))for(const style of ['king','arch','hammer']){
  const span=width*.3048-.3,rise=span/3;let root;
  if(style==='hammer'){
@@ -88,16 +89,27 @@ for(const width of (expandedOnly?[]:[12,14,16,20]))for(const style of ['king','a
 }
 // New width families use the same parametric trusses as the live preview.
 const frames=JSON.parse(readFileSync('lib/pavilion-size-expansion.json','utf8'));
-for(const [width,length] of [[10,14],[18,18],[22,60],[24,24],[30,34],[32,32],[10,10]]) {
+for(const [width,length] of (process.argv.includes('--wide-only')?[[18,18],[20,30],[22,60],[24,24],[30,34],[32,32]]:[[10,14],[18,18],[20,30],[22,60],[24,24],[30,34],[32,32],[10,10]])) {
  const frame=frames[`${width}x${length}`],span=width*.3048-7.5*.0254,rise=span/2*frame.pitch;
- for(const style of frame.allowedTrusses) {
-  const root=object(model[style==='king'?'KingTruss':style==='arch'?'RuntimeArchTruss':'RuntimeHammerTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,memberHeightIn:frame.rafterIn[1],plates:false}));
+ for(const style of frame.allowedTrusses.filter(style=>!process.argv.includes('--wide-only')||style!=='king')) {
+  const root=object(model[style==='king'?'KingTruss':style==='arch'?(width>16?'RuntimeArchTruss':'SmallRuntimeArchTruss'):(width>16?'RuntimeHammerTruss':'SmallRuntimeHammerTruss')]({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,memberHeightIn:frame.rafterIn[1],plates:false}));
   root.traverse(mesh=>{if(mesh.isMesh)for(const v of mesh.geometry.attributes.position.array)if(!Number.isFinite(v))throw Error(`Invalid ${style} ${width} geometry`)});
   // Plated variants must stay inside the roof envelope at every new pitch.
-  const plated=object(model[style==='king'?'KingTruss':style==='arch'?'RuntimeArchTruss':'RuntimeHammerTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,memberHeightIn:frame.rafterIn[1],plates:true,parametricPlates:true,isOuter:true,peakPlateFace:1}));
+  const plated=object(model[style==='king'?'KingTruss':style==='arch'?(width>16?'RuntimeArchTruss':'SmallRuntimeArchTruss'):(width>16?'RuntimeHammerTruss':'SmallRuntimeHammerTruss')]({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:.1524,memberHeightIn:frame.rafterIn[1],plates:true,parametricPlates:true,isOuter:true,peakPlateFace:1}));
   plated.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(plated);
   if(bounds.max.y>rise+frame.rafterIn[1]*.0254/Math.cos(Math.atan(frame.pitch))/2+.03)throw Error(`Plate above roof: ${style} ${width}`);
+  if(process.argv.includes('--review')) {
+    mkdirSync('tmp/truss-review',{recursive:true});
+    await render(plated,`tmp/truss-review/${style}-${width}-plates.png`);
+    if(width>16&&style!=='king') {
+      const scroll=object(model[style==='arch'?'RuntimeArchTruss':'RuntimeHammerTruss']({span,z:0,baseY:0,peakY:rise,color:'#deb87c',seatLower:4*.0254,memberHeightIn:frame.rafterIn[1],plates:false,tailStyle:'scroll'}));
+      scroll.updateMatrixWorld(true);
+      const envelope=new THREE.Box3().setFromObject(scroll);
+      if(envelope.max.y>rise+frame.rafterIn[1]*.0254/Math.cos(Math.atan(frame.pitch))/2+.03)throw Error(`Scroll rafter above roof: ${style} ${width}`);
+      await render(scroll,`tmp/truss-review/${style}-${width}-scroll.png`);
+    }
+  }
   await render(root,`public/truss-icons/${style}-${width}${width===10&&length===10?'-6':''}.png`);
  }
 }
