@@ -1,4 +1,5 @@
 import {pavilionCameraPosition} from './camera-fit';
+import {drawingKey,registerReviewRenderer,renderPavilionDrawings} from './review-drawings';
 import {TimberGrainMapping} from './TimberGrainMapping';
 import {Dimensions} from "./dimensions";
 import { Canvas, useLoader, useFrame, useThree } from "@react-three/fiber";
@@ -120,6 +121,18 @@ function CameraRig({ view, config, allowUnderside, measureEnabled = false }: { v
 // Repositions the camera to a deterministic 3/4 angle framed on the pavilion's
 // bounding box, renders one frame, snapshots it, then restores camera state.
 const pavilionGroupRef: { current: THREE.Group | null } = { current: null };
+function ReviewCaptureRegistrar({config,tableStain,deckStain,showRoof}:{config:PavilionConfig;tableStain:string|null;deckStain:string|null;showRoof:boolean}){
+ const {scene}=useThree();
+ const key=drawingKey({config,tableStain,deckStain});
+ useEffect(()=>{
+  if(!showRoof)return;
+  return registerReviewRenderer(key,()=>{
+   if(!pavilionGroupRef.current)throw new Error('The pavilion is still loading. Retry the drawings.');
+   return renderPavilionDrawings(pavilionGroupRef.current,scene.environment);
+  });
+ },[key,showRoof,scene]);
+ return null;
+}
 const captureFnRef: { current: null | (() => Promise<string | undefined>) } = {
   current: null,
 };
@@ -471,6 +484,7 @@ export function Scene({
         <group position={[0, showPad ? padThickness : 0, 0]}>
           <Pavilion config={config} showRoof={showRoof} showTrusses={showTrusses} showFrame={showFrame} showRafters={showRafters} grainAdjust={grainAdjust} grainPieces={grainPieces} grainFaces={grainFaces} handPeeledRandom={handPeeledRandom} scrollCapRotation={scrollCapRotation} rakeTrimAdjust={rakeTrimAdjust} metalRakeTrimAdjust={metalRakeTrimAdjust} backRakeRotate={backRakeRotate} backRakeRotation={backRakeRotation} shingleScale={shingleScale} shingleContrast={shingleContrast} shingleBrightness={shingleBrightness} shingleSaturate={shingleSaturate} shingleBumpScale={shingleBumpScale} shingleRoughness={shingleRoughness} shingleCapRotation={shingleCapRotation} shingleCapScale={shingleCapScale} shingleCapOffset={shingleCapOffset} shingleCapTextureScale={shingleCapTextureScale} hammerYOffset={hammerYOffset} hammerScale={hammerScale} hammerGroupOffset={hammerGroupOffset} hammerCorbelScale={hammerCorbelScale} hammerCorbelOffset={hammerCorbelOffset} hammerCorbelRotation={hammerCorbelRotation} hammerPieceOffsets={hammerPieceOffsets} hammerPieceScales={hammerPieceScales} hammer12Glb={hammer12Glb} hammer14Glb={hammer14Glb} hammer16Glb={hammer16Glb} hammer20Glb={hammer20Glb} plateOffset={plateOffset} plateRotation={plateRotation} plateSizeScale={plateSizeScale} webPlateOffset={webPlateOffset} webPlateRotation={webPlateRotation} webPlateSizeScale={webPlateSizeScale} vPlateSurfaceInset={vPlateSurfaceInset} webPlateSurfaceInset={webPlateSurfaceInset} peakPlateOffset={peakPlateOffset} peakPlateRotation={peakPlateRotation} peakPlateSizeScale={peakPlateSizeScale} peakPlateSurfaceInset={peakPlateSurfaceInset} archPlateOffset={archPlateOffset} archPlateRotation={archPlateRotation} archPlateSizeScale={archPlateSizeScale} simplePlateOffset={simplePlateOffset} simplePlateRotation={simplePlateRotation} simplePlateSizeScale={simplePlateSizeScale} topPlateOffset={topPlateOffset} topPlateRotation={topPlateRotation} topPlateSizeScale={topPlateSizeScale} webPlate2Offset={webPlate2Offset} webPlate2Rotation={webPlate2Rotation} webPlate2SizeScale={webPlate2SizeScale} kingPeakPlateOffset={kingPeakPlateOffset} kingPeakPlateRotation={kingPeakPlateRotation} kingPeakPlateSizeScale={kingPeakPlateSizeScale} kingHeelPlateOffset={kingHeelPlateOffset} kingHeelPlateRotation={kingHeelPlateRotation} kingHeelPlateSizeScale={kingHeelPlateSizeScale} kingWebPlateOffset={kingWebPlateOffset} kingWebPlateRotation={kingWebPlateRotation} kingWebPlateSizeScale={kingWebPlateSizeScale} kingHeelPlate2Offset={kingHeelPlate2Offset} kingHeelPlate2Rotation={kingHeelPlate2Rotation} kingHeelPlate2SizeScale={kingHeelPlate2SizeScale} trussPlateExtraOffsets={trussPlateExtraOffsets} pavilionStain={tableStain} deckStain={deckStain} stainOpacity={stainOpacity} stainDarkness={stainDarkness} rawBeamColor={rawBeamColor} rawDeckColor={rawDeckColor} roofOnlyLiftIn={roofOnlyLiftIn} onGrainPick={onGrainPick} pieceAdjusts={pieceAdjusts} onRootMount={(g) => { pavilionGroupRef.current = g; onPavilionMount?.(g); }} />
         <HeroCaptureRegistrar />
+        <ReviewCaptureRegistrar config={config} tableStain={tableStain} deckStain={deckStain} showRoof={showRoof}/>
         </group>
         
         {showTable && <PicnicTable position={[tableOffset.x, showPad ? padThickness : 0, tableOffset.z]} rotation={tableRotation} stain={tableStain} />}

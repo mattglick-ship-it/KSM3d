@@ -1,7 +1,10 @@
 import { jsPDF } from "jspdf";
 import {pdfRegular,pdfBold} from "./pdf-fonts";
+import type {PavilionDrawings} from '@/components/pavilion/review-drawings';
 
 export interface QuotePdfData {
+  drawings?: PavilionDrawings;
+  specs?: [string,string][];
   projectName?: string;
   customer: {
     name: string;
@@ -26,6 +29,7 @@ export interface QuotePdfData {
     lineItems?: { label: string; amount: string }[];
     total?: string;
     priceNote?: string;
+    pending?: string[];
   };
 }
 
@@ -69,7 +73,7 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
 
   doc.setFont("KSM", "bold");
   doc.setFontSize(22);
-  doc.text("Pavilion Quote", margin, 62);
+  doc.text("Pavilion Estimate", margin, 62);
 
   // Right-aligned meta in header
   doc.setFont("KSM", "normal");
@@ -225,7 +229,7 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
     "Snow Guards",
     data.quote.snowGuards == null ? undefined : data.quote.snowGuards ? "Included" : "No",
   );
-  if (specRows.length) kvList(specRows, { twoCol: false });
+  if (specRows.length) kvList(data.specs||specRows, { twoCol: false });
 
   // ============= UPGRADES =============
   if (data.quote.upgrades && data.quote.upgrades.length > 0) {
@@ -284,7 +288,7 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
       setText(doc, WHITE);
       doc.setFont("KSM", "normal");
       doc.setFontSize(9);
-      doc.text("TOTAL", margin + 18, y + 18, {  });
+      doc.text(data.quote.pending?.length?'PRICED SUBTOTAL':'ESTIMATED TOTAL', margin + 18, y + 18, {  });
       doc.setFont("KSM", "bold");
       doc.setFontSize(18);
       doc.text(data.quote.total, pageW - margin - 18, y + 28, { align: "right" });
@@ -301,6 +305,12 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
     }
   }
 
+  if(data.quote.pending?.length){
+    y+=12;sectionHeader('Items awaiting pricing');
+    doc.setFont('KSM','normal');doc.setFontSize(10);setText(doc,INK_SOFT);
+    for(const item of data.quote.pending){for(const line of doc.splitTextToSize(item,contentW)){ensureSpace(14);doc.text(line,margin,y);y+=14}y+=4}
+  }
+
   // ============= NOTES =============
   if (data.customer.notes) {
     y += 4;
@@ -310,6 +320,20 @@ export function generateQuotePdf(data: QuotePdfData): jsPDF {
     setText(doc, INK_SOFT);
     const lines = doc.splitTextToSize(data.customer.notes, contentW);
     for(const line of lines){ensureSpace(14);doc.setFontSize(10);setText(doc,INK_SOFT);doc.text(line,margin,y);y+=13;}
+  }
+
+  if(data.drawings){
+    const d=data.drawings;
+    const drawingPage=(title:string)=>{doc.addPage();y=54;sectionHeader(title);doc.setFont('KSM','normal');doc.setFontSize(9);setText(doc,INK_SOFT);doc.text(`${data.quote.size||''} · ${data.quote.trussStyle||'Pavilion'} · ${data.quote.postHeight||''} posts`,margin,y);y+=20};
+    const image=(src:string,label:string,x:number,top:number,w:number,h:number)=>{doc.addImage(src,src.startsWith('data:image/png')?'PNG':'JPEG',x,top,w,h);doc.setFont('KSM','bold');doc.setFontSize(10);setText(doc,BRAND);doc.text(label,x+w/2,top+h+16,{align:'center'})};
+    drawingPage('Pavilion perspectives');
+    image(d.perspective,'Front perspective',90,100,432,288);image(d.rearPerspective,'Rear perspective',90,425,432,288);
+    drawingPage('Exterior elevations');
+    image(d.front,'Front',54,125,244,244/1.5);image(d.rear,'Rear',314,125,244,244/1.5);
+    image(d.left,'Left side',54,350,244,244/1.5);image(d.right,'Right side',314,350,244,244/1.5);
+    doc.setFont('KSM','normal');doc.setFontSize(9);setText(doc,INK_SOFT);doc.text(doc.splitTextToSize('All four elevations use the same scale. Roof overhangs extend beyond the nominal pavilion size. Use stated dimensions; do not scale these views.',504),54,575);
+    drawingPage('Dimensioned post and truss plan');image(d.plan,'Pavilion framing layout',54,125,504,504*960/1230);
+    doc.setFont('KSM','normal');doc.setFontSize(9);setText(doc,INK_SOFT);doc.text(doc.splitTextToSize('Width is measured across the outside post faces. Length and bay dimensions follow end-post centers. Roof overhangs and furniture are omitted from the framing plan. Illustrative configuration only; not an engineered construction or foundation drawing.',504),54,570);
   }
 
   // ============= FOOTER ON ALL PAGES =============
@@ -349,4 +373,3 @@ export function downloadQuotePdf(data: QuotePdfData) {
     .toLowerCase();
   doc.save(`${safe || "pavilion-quote"}.pdf`);
 }
-

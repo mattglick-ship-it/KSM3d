@@ -11,6 +11,8 @@ import {RadioGroup,RadioGroupItem} from '@/components/ui/radio-group';
 import {customerSchema,pavilionSummary,designLink,DEPOSIT,type QuoteCustomer} from '@/lib/pavilion-commerce';
 import {usePricing} from './published-settings';
 import {notifyQuoteParent,quoteEmbedPayload} from '@/lib/pavilion-embed';
+import type {ReviewContact} from './design-review';
+import type {PavilionDrawings} from './review-drawings';
 import type {Design} from './designer-model';
 
 async function api(path:string,body:unknown){
@@ -18,20 +20,28 @@ async function api(path:string,body:unknown){
  const data=z.record(z.unknown()).parse(await response.json());if(!response.ok||data.error)throw new Error(typeof data.error==='string'?data.error:'Please try again.');return data;
 }
 
-export function QuoteCheckout({open,onOpenChange,design,intent,capture}:{open:boolean;onOpenChange:(v:boolean)=>void;design:Design;intent:'quote'|'order';capture:()=>string|undefined}){
+export function QuoteCheckout({open,onOpenChange,design,intent,capture,customer:controlledCustomer,setCustomer:changeCustomer,projectName:controlledName,setProjectName:changeName,onNotes,drawings,specs}:Partial<ReviewContact>&{open:boolean;onOpenChange:(v:boolean)=>void;design:Design;intent:'quote'|'order';capture:()=>string|undefined;onNotes?:(notes:string)=>void;drawings?:PavilionDrawings|null;specs?:[string,string][]}){
+ const [localCustomer,setLocalCustomer]=useState<QuoteCustomer>({name:'',email:'',phone:'',fulfillment:'pickup',address:'',notes:'',sendCopyToCustomer:true});
+ const [localName,setLocalName]=useState('My KSM pavilion');
+ const customer=controlledCustomer??localCustomer,setCustomer=changeCustomer??setLocalCustomer,projectName=controlledName??localName,setProjectName=changeName??setLocalName;
  const pricing=usePricing();
  const [notice,setNotice]=useState('');
- const [customer,setCustomer]=useState<QuoteCustomer>({name:'',email:'',phone:'',fulfillment:'pickup',address:'',notes:'',sendCopyToCustomer:true});
- const [projectName,setProjectName]=useState('My KSM pavilion'),[pdf,setPdf]=useState(true),[busy,setBusy]=useState(false),[saved,setSaved]=useState(false),[error,setError]=useState('');
+ const [pdf,setPdf]=useState(true),[busy,setBusy]=useState(false),[saved,setSaved]=useState(false),[error,setError]=useState('');
  const [shipping,setShipping]=useState<{miles:number;cost:number;outOfRange:boolean}|null>(null),[shippingBusy,setShippingBusy]=useState(false),[shippingError,setShippingError]=useState('');
  const shippingRequest=useRef(0),savedFingerprint=useRef(''),attemptFingerprint=useRef(''),notifiedSubmission=useRef(''),submission=useRef('');
  const summary=useMemo(()=>pavilionSummary(design,projectName,pricing),[design,projectName,pricing]);
- const update=<K extends keyof QuoteCustomer>(key:K,value:QuoteCustomer[K])=>{setCustomer(c=>({...c,[key]:value}));setSaved(false);setError('');if(key==='address'||key==='fulfillment'){shippingRequest.current++;setShipping(null);setShippingBusy(false);setShippingError('')}};
- useEffect(()=>{if(open){setSaved(false);setError('');setNotice('');setCustomer(c=>({...c,notes:c.notes||design.notes}))}},[open,intent]);
+ const update=<K extends keyof QuoteCustomer>(key:K,value:QuoteCustomer[K])=>{setCustomer(c=>({...c,[key]:value}));if(key==='notes')onNotes?.(value as string);setSaved(false);setError('');if(key==='address'||key==='fulfillment'){shippingRequest.current++;setShipping(null);setShippingBusy(false);setShippingError('')}};
+ useEffect(()=>{if(open){setSaved(false);setError('');setNotice('');setCustomer(c=>({...c,notes:onNotes?design.notes:(c.notes||design.notes)}))}},[open,intent]);
  async function estimateDelivery(){const id=++shippingRequest.current;setShippingBusy(true);setShippingError('');try{const data=z.object({miles:z.number().nonnegative(),cost:z.number().nonnegative(),outOfRange:z.boolean()}).parse(await api('shipping',{address:customer.address}));if(id===shippingRequest.current)setShipping(data)}catch(e){if(id===shippingRequest.current)setShippingError(e instanceof Error?e.message:'KSM can quote delivery.')}finally{if(id===shippingRequest.current)setShippingBusy(false)}}
  async function downloadPdf(){
   const {downloadQuotePdf}=await import('@/lib/pavilion-quote-pdf');
-  downloadQuotePdf({projectName,customer:{...customer,fulfillment:customer.fulfillment==='pickup'?'Pickup at KSM Log Homes':customer.address},quote:summary});
+  let completeDrawings=drawings;
+  if(specs&&!completeDrawings){
+   const {captureReviewDrawings,drawingKey}=await import('./review-drawings');
+   const {renderPlanImage}=await import('./review-plan');
+   completeDrawings={...await captureReviewDrawings(drawingKey(design),new AbortController().signal),plan:await renderPlanImage(design.config)};
+  }
+  downloadQuotePdf({projectName,customer:{...customer,fulfillment:customer.fulfillment==='pickup'?'Pickup at KSM Log Homes':customer.address},quote:summary,specs,...(completeDrawings?{drawings:completeDrawings}:{})});
  }
  async function submit(mode:'quote'|'order'){
   const parsed=customerSchema.safeParse(customer);if(!parsed.success){setError(parsed.error.issues[0].message);return}
