@@ -11,7 +11,7 @@ export const designSchema=z.object({
  furniture:z.enum(['none','picnic','sectional','dining','patio','grill']).default('none'),
  furnitureLayout:furnitureLayoutSchema.optional(),
  tv:z.object({enabled:z.boolean(),corner:z.enum(['fl','fr','br','bl']),height:z.number().finite().min(5).max(8)}).default({enabled:false,corner:'fl',height:6}),
-}).transform(d=>({...d,config:{...d.config,trussPlates:requiresTrussPlates(d.config.width)||d.config.trussPlates},furnitureLayout:normalizeFurniture(d.config,d.furnitureLayout??defaultFurnitureLayout(d.furniture)),tv:{...d.tv,height:Math.min(d.config.height-2,d.tv.height)}}));
+}).transform(d=>({...d,config:{...d.config,gableOverhang:true,hideBackTruss:false,trussPlates:requiresTrussPlates(d.config.width)||d.config.trussPlates},furnitureLayout:normalizeFurniture(d.config,d.furnitureLayout??defaultFurnitureLayout(d.furniture)),tv:{...d.tv,height:Math.min(d.config.height-2,d.tv.height)}}));
 export type Design=z.infer<typeof designSchema>;
 export const initialDesign:Design=designSchema.parse({version:1,config:{...DEFAULT_CONFIG,height:8,roof:'gable',truss:'king',roofId:'ss-slate-gray'},tableStain:null,deckStain:null,notes:'',furniture:'none'});
 export type SceneInputs={furnitureLayout:FurnitureLayout;tv:Design['tv'];config:PavilionConfig;view:ViewPreset;showRoof:boolean;showPad:boolean;showBackyard:boolean;showTable:boolean;showSectional:boolean;showEgg:boolean;showTv:boolean;showDining:boolean;showPatio:boolean;tableStain:string|null;deckStain:string|null;measureEnabled:boolean;showDimensions:boolean};
