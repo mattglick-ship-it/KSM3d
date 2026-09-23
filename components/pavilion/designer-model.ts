@@ -13,7 +13,7 @@ export const designSchema=z.object({
  tv:z.object({enabled:z.boolean(),corner:z.enum(['fl','fr','br','bl']),height:z.number().finite().min(5).max(8)}).default({enabled:false,corner:'fl',height:6}),
 }).transform(d=>({...d,furnitureLayout:normalizeFurniture(d.config,d.furnitureLayout??defaultFurnitureLayout(d.furniture)),tv:{...d.tv,height:Math.min(d.config.height-2,d.tv.height)}}));
 export type Design=z.infer<typeof designSchema>;
-export const initialDesign:Design=designSchema.parse({version:1,config:{...DEFAULT_CONFIG,height:8,roof:'gable',truss:'king',roofId:'ss-slate-gray'},tableStain:null,deckStain:null,notes:'',furniture:'picnic'});
+export const initialDesign:Design=designSchema.parse({version:1,config:{...DEFAULT_CONFIG,height:8,roof:'gable',truss:'king',roofId:'ss-slate-gray'},tableStain:null,deckStain:null,notes:'',furniture:'none'});
 export type SceneInputs={furnitureLayout:FurnitureLayout;tv:Design['tv'];config:PavilionConfig;view:ViewPreset;showRoof:boolean;showPad:boolean;showBackyard:boolean;showTable:boolean;showSectional:boolean;showEgg:boolean;showTv:boolean;showDining:boolean;showPatio:boolean;tableStain:string|null;deckStain:string|null;measureEnabled:boolean;showDimensions:boolean};
 export const stains=[{name:'Unfinished',hex:null},{name:'Old Lathe',hex:'#7a6a55'},{name:'Barn Brown',hex:'#5a3a25'},{name:'Medium Gray',hex:'#8a8478'},{name:'Sunset',hex:'#b87045'},{name:'White',hex:'#e8e0d2'},{name:'Light Gray',hex:'#b4ada1'},{name:'Cedar',hex:'#b07a4a'},{name:'Rustic Cedar',hex:'#8a4a2a'},{name:'Black',hex:'#15120e'},{name:'Cappuccino',hex:'#5e4530'},{name:'Early American',hex:'#6b4423'},{name:'Clear',hex:'#f5ecd9'}];
 export const stainName=(hex:string|null)=>stains.find(s=>s.hex===hex)?.name||'Custom';

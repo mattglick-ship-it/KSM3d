@@ -38,6 +38,7 @@ export function Hammer12Truss({
   z,
   baseY,
   color,
+  hideRafters = false,
   adjust = HAMMER12_GLB_DEFAULT_ADJUST,
 }: {
   /** Truss span in meters — used to auto-fit the truss assembly to the pavilion width. */
@@ -48,6 +49,7 @@ export function Hammer12Truss({
   baseY: number;
   /** Hex color matching the rest of the pavilion's beams. */
   color: string;
+  hideRafters?: boolean;
   adjust?: Hammer12Adjust;
 }) {
   // Same texture pipeline the posts use, so finish/grain choices match.
@@ -66,7 +68,12 @@ export function Hammer12Truss({
   }, [grainTex, color, surface, finish]);
   useEffect(() => () => sharedMat.dispose(), [sharedMat]);
 
-  const cloned = useMemo(() => createHammerScene(12, sharedMat), [sharedMat]);
+  const cloned = useMemo(() => {
+    const scene = createHammerScene(12, sharedMat);
+    // Keep the full drawing bounds for the established body fit.
+    for (const mesh of scene.children) if (/^hammer\.rafter\./.test(mesh.name)) mesh.visible = !hideRafters;
+    return scene;
+  }, [sharedMat, hideRafters]);
   useEffect(() => () => cloned.traverse(o => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).geometry.dispose(); }), [cloned]);
 
   const { offset, baseScale } = useMemo(() => {

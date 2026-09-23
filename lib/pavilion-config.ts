@@ -211,7 +211,7 @@ const CUSTOM_PAVILION_SIZES = [
   { width: 32, length: 40 },
 ];
 
-export const CUSTOMER_PAVILION_SIZES = [...ORIGINAL_PAVILION_SIZES,...Object.values(EXPANDED_FRAMES).map(({width,length})=>({width,length}))].sort((a,b)=>a.width-b.width||a.length-b.length);
+export const CUSTOMER_PAVILION_SIZES = [...ORIGINAL_PAVILION_SIZES,...Object.values(EXPANDED_FRAMES).map(({width,length})=>({width,length}))].filter(({width})=>width!==18).sort((a,b)=>a.width-b.width||a.length-b.length);
 export const PAVILION_SIZES = [...new Map([...CUSTOMER_PAVILION_SIZES,...CUSTOM_PAVILION_SIZES].map(s=>[`${s.width}x${s.length}`,s])).values()];
 export function isCallForQuote(width: number, length: number): boolean {
   return !CUSTOMER_PAVILION_SIZES.some(s=>s.width===width&&s.length===length);

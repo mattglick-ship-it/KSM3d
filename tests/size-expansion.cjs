@@ -14,8 +14,8 @@ const THREE=require('three'),{pavilionCameraPosition}=require('../components/pav
 // Independent source values and the complete pre-expansion retail rows.
 const expected=require('./fixtures/workbook-pavilion-prices.json');
 const originals=require('./fixtures/original-pavilion-prices.json');
-assert.equal(CUSTOMER_PAVILION_SIZES.length,37);
-assert.equal(new Set(CUSTOMER_PAVILION_SIZES.map(s=>`${s.width}x${s.length}`)).size,37);
+assert.equal(CUSTOMER_PAVILION_SIZES.length,33);
+assert.equal(new Set(CUSTOMER_PAVILION_SIZES.map(s=>`${s.width}x${s.length}`)).size,33);
 assert.equal(catalog.sizes.length,37);
 for(const old of Object.values(originals))assert.deepEqual(catalog.sizes.find(s=>s.id===old.id),old,'Original row must remain exactly unchanged: '+old.id);
 for(const size of CUSTOMER_PAVILION_SIZES)for(const aspect of [.45,.8,1.8,2.5])for(const view of ['3d','side','top']){
@@ -42,6 +42,7 @@ for(const [id,source] of Object.entries(expected)) {
   assert.equal(quote.total,source.prices[roof],id+' base '+roof);assert.deepEqual(quote.callForPricing,[],id+' base fully priced');
  }
  for(const truss of availableTrusses(width,length))for(const height of availableHeights(width,length)){
+  if(width===18){assert.equal(designSchema.safeParse(designFor(id,{truss,height})).success,false,id+" removed from configurator");continue;}
   const design=designSchema.parse(designFor(id,{truss,height}));
   assert.deepEqual(decodeDesignHash('#design='+btoa(encodeURIComponent(JSON.stringify(design)))),design);
   assert.equal(computeLinealFeet(design.config).posts,posts*height);
@@ -80,5 +81,5 @@ require.cache[require.resolve('../lib/ksm-service.server.ts')]={exports:{ksmServ
  const response=await route.POST(new Request('https://example.invalid/api/pavilion/checkout',{method:'POST',headers:{Origin:'https://example.invalid','Content-Type':'application/json'},body:JSON.stringify(data)}));
  assert.equal(response.status,400);assert.match((await response.json()).error,/confirm this pavilion price/i);
  assert.equal(externalCalls,0,'pending base prices must not initiate payments');
- console.log('Size expansion passed: all 37 footprints, 25 workbook layouts and 75 roof prices; original twelve complete price records unchanged; supported packages/heights/save links; full camera fit; pricing migration and payment guard.');
+ console.log('Size expansion passed: 33 offered footprints (18-foot widths removed), 25 workbook layouts and 75 roof prices; original twelve complete price records unchanged; supported packages/heights/save links; full camera fit; pricing migration and payment guard.');
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -26,12 +26,14 @@ export function Hammer14Truss({
   z,
   baseY,
   color,
+  hideRafters = false,
   adjust = HAMMER14_GLB_DEFAULT_ADJUST,
 }: {
   span: number;
   z: number;
   baseY: number;
   color: string;
+  hideRafters?: boolean;
   adjust?: Hammer14Adjust;
 }) {
   const grainTex = useWoodTexture(Math.PI / 2, 1, 1, "hammer14glb");
@@ -48,7 +50,12 @@ export function Hammer14Truss({
   }, [grainTex, color, surface, finish]);
   useEffect(() => () => sharedMat.dispose(), [sharedMat]);
 
-  const cloned = useMemo(() => createHammerScene(14, sharedMat), [sharedMat]);
+  const cloned = useMemo(() => {
+    const scene = createHammerScene(14, sharedMat);
+    // Keep the full drawing bounds for the established body fit.
+    for (const mesh of scene.children) if (/^hammer\.rafter\./.test(mesh.name)) mesh.visible = !hideRafters;
+    return scene;
+  }, [sharedMat, hideRafters]);
   useEffect(() => () => cloned.traverse(o => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).geometry.dispose(); }), [cloned]);
 
   const { offset, baseScale } = useMemo(() => {

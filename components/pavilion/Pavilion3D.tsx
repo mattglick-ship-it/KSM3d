@@ -1,3 +1,4 @@
+import { createFittedScrollRafter } from './scroll-rafter-geometry';
 import {createWideTruss,type WideTrussStyle} from './wide-truss-geometry';
 import {expandedFrame,pavilionStations} from '@/lib/pavilion-layout';
 import { configureTimberMaterial } from './timber-grain';
@@ -2280,6 +2281,8 @@ function ArchedBrace({
 
 /** Rafter with a perpendicular cut at the peak (inner) end and either a
  *  plumb (vertical) cut or a decorative scroll cut at the outer tail end. */
+const FittedScrollContext = createContext(false);
+
 function PlumbRafter({
   iy,
   outerX,
@@ -2307,8 +2310,10 @@ function PlumbRafter({
   tailStyle?: "standard" | "scroll";
   parametricTail?: boolean;
 }) {
+  const fittedScroll = useContext(FittedScrollContext) && tailStyle === "scroll";
   const scrollGeom = useScrollCutRafterGeometry(outerX / Math.cos(pitchAngle), t, depth);
   const geom = useMemo(() => {
+    if (fittedScroll) return createFittedScrollRafter({iy, outerX, pitchAngle, t, depth, side, seatX, seatY});
     const sinA = Math.sin(pitchAngle);
     const cosA = Math.cos(pitchAngle);
     const tanA = sinA / cosA;
@@ -2412,8 +2417,9 @@ function PlumbRafter({
       g.computeVertexNormals();
     }
     return g;
-  }, [iy, outerX, pitchAngle, t, depth, side, seatX, seatY, tailStyle]);
-  if (tailStyle === "scroll" && !parametricTail) {
+  }, [iy, outerX, pitchAngle, t, depth, side, seatX, seatY, tailStyle, fittedScroll]);
+  useEffect(() => () => geom.dispose(), [geom]);
+  if (tailStyle === "scroll" && !parametricTail && !fittedScroll) {
     // Render the uploaded scroll-cut rafter STL in place of the procedural shape.
     // Peak/top-edge of the STL is at (0,0); pivot at the rafter's inner-top
     // corner (matches PlumbRafter's local frame), then mirror + rotate down.
@@ -3897,6 +3903,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   const roofRidgeH = config.roof === "flat" ? 0.15 : ridgeH + roofLift - roofEaveY;
 
   return (
+   <FittedScrollContext.Provider value={config.width === 12 || config.width === 14}>
    <WoodFinishContext.Provider value={config.woodId}>
    <HandPeeledRandomContext.Provider value={handPeeledRandom}>
    <ShingleScaleContext.Provider value={shingleScale}>
@@ -3942,6 +3949,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
           const filtered: Record<string, PieceAdjust> = {};
           for (const k of Object.keys(src)) {
             const bare = k.replace(/^(piece:|cat:)/, "");
+            if ((config.width === 12 || config.width === 14) && /\.rafter\.(l|r)$/.test(bare)) continue;
             if (config.rafterTail !== "scroll" && (/\.rafter\.(l|r)$/.test(bare) || bare === "side.collar")) continue;
             filtered[k] = src[k];
           }
@@ -4183,7 +4191,17 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
                   hammer20Glb;
                 return (
                   <group key={`hglb-${i}`}>
-                    <GlbTruss span={common.span} z={common.z} baseY={common.baseY} color={common.color} adjust={glbAdjust as any} />
+                    <GlbTruss span={common.span} z={common.z} baseY={common.baseY} color={common.color} adjust={glbAdjust as any} {...{hideRafters: (config.width === 12 || config.width === 14) && config.rafterTail === "scroll"}} />
+                    {(config.width === 12 || config.width === 14) && config.rafterTail === "scroll" && (
+                      <group position={[0, trussBase, zEnd]}>
+                        {([-1, 1] as const).map(side => <PlumbRafter key={side}
+                          iy={ridgeH} outerX={trussSpan / 2 + 16 * .0254}
+                          pitchAngle={Math.atan(pitch)} t={rafterT} depth={5.5 * .0254}
+                          side={side} color={wood} seatX={trussSpan / 2 + 4 * .0254}
+                          seatY={-TRUSS_LIFT} piece={`hammer.rafter.${side < 0 ? "l" : "r"}`}
+                          tailStyle="scroll" />)}
+                      </group>
+                    )}
                     {config.trussPlates && (
                       <HammerTruss
                         {...common}
@@ -4416,6 +4434,7 @@ export function Pavilion({ config, showRoof = true, showTrusses = true, showFram
   </ShingleScaleContext.Provider>
   </HandPeeledRandomContext.Provider>
   </WoodFinishContext.Provider>
+  </FittedScrollContext.Provider>
   );
 }
 
