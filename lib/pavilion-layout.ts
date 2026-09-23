@@ -8,6 +8,8 @@ export type FrameSpec = {
   allowedTrusses: FrameTruss[]; runtimeTruss: boolean; packageNote: string;
 };
 export const EXPANDED_FRAMES = additions as Record<string, FrameSpec>;
+export const requiresTrussPlates = (width: number) => width > 16;
+
 export function expandedFrame(width: number, length: number): FrameSpec | undefined {
   return EXPANDED_FRAMES[`${width}x${length}`];
 }

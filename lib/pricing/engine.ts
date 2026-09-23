@@ -1,3 +1,4 @@
+import {requiresTrussPlates} from '../pavilion-layout';
 import { DEFAULT_SNOW_RATES, snowQuantities } from '../snow-retention';
 import type { PricingDoc, Selection, Quote, QuoteLine, HeightId, RoofKey, FinishId, TrussStyleId, RafterTailId } from "./types";
 import type { PavilionConfig } from "@/lib/pavilion-config";
@@ -78,11 +79,12 @@ export function computeQuote(sel: Selection, data: PricingDoc): Quote {
     else if (amt > 0) lines.push({ label: "Scroll Cut Rafter Tail", amount: amt });
   }
 
-  // 6. PLATES — user-controlled; included sizes only add the zero-dollar line when selected.
+  // 6. PLATES — required above 16 feet; honor included packages and existing rates.
   const plates = size.decorativeTrussPlates;
-  if (sel.decorativeTrussPlates && plates?.included) {
+  const includePlates = requiresTrussPlates(size.width) || sel.decorativeTrussPlates;
+  if (includePlates && plates?.included) {
     lines.push({ label: "Decorative Truss Plates (Included)", amount: 0 });
-  } else if (sel.decorativeTrussPlates) {
+  } else if (includePlates) {
     const amt = plates?.upcharge;
     if (amt == null) callForPricing.push("Decorative Truss Plates");
     else lines.push({ label: "Decorative Truss Plates", amount: amt });
@@ -180,7 +182,7 @@ export function selectionFromConfig(
     height: heightId,
     trussStyle: TRUSS_TO_STYLE[config.truss] ?? "king",
     rafterTail,
-    decorativeTrussPlates: !!config.trussPlates,
+    decorativeTrussPlates: requiresTrussPlates(config.width) || !!config.trussPlates,
     overhangFaceboard: !!config.gableFascia,
     texturedMetal: textured,
     stained: beamStained || deckStained,

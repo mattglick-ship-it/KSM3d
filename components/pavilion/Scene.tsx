@@ -1,3 +1,4 @@
+import {GrassGround} from './GrassGround';
 import {pavilionCameraPosition} from './camera-fit';
 import {drawingKey,registerReviewRenderer,renderPavilionDrawings} from './review-drawings';
 import {TimberGrainMapping} from './TimberGrainMapping';
@@ -452,23 +453,17 @@ export function Scene({
       shadows={{type: THREE.PCFShadowMap}}
       dpr={[1, 2]}
       style={{ width: "100%", height: "100%", touchAction: "none" }}
-      camera={{ position: [10, 6, 12], fov: 40 }}
+      camera={{ position: [10, 6, 12], fov: 40, far: 3000 }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, localClippingEnabled: true, preserveDrawingBuffer: true }}
     >
       <Suspense fallback={null}>
-        <Environment files="/models/park.hdr" background={showBackyard}
-          ground={showBackyard ? {height: 1.8, radius: 80, scale: 120} : false}
-          environmentIntensity={0.65} backgroundIntensity={0.9} />
-        {!showBackyard && <color attach="background" args={["#e8edef"]}/>}
+        <Environment files="/models/park.hdr" background={false} environmentIntensity={0.65} />
+        <color attach="background" args={[showBackyard ? "#b9d3e7" : "#e8edef"]}/>
+        {showBackyard && <fog attach="fog" args={["#b9d3e7", 120, 450]} />}
         <hemisphereLight args={["#dae9f5", "#b2a28a", 0.25]} />
         <ambientLight intensity={0.06} color="#fff8ef" />
         <BackSun width={config.width} length={config.length} />
-        {showBackyard ? (
-          <mesh rotation={[-Math.PI/2,0,0]} position={[0,0.003,0]} receiveShadow>
-            <planeGeometry args={[160,160]}/>
-            <shadowMaterial transparent opacity={0.32} depthWrite={false}/>
-          </mesh>
-        ) : <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[200,200]}/><meshStandardMaterial color="#e4e9e7" roughness={1}/></mesh>}
+        {showBackyard ? <GrassGround /> : <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[200,200]}/><meshStandardMaterial color="#e4e9e7" roughness={1}/></mesh>}
         {showDimensions && <Dimensions width={config.width} length={config.length} height={config.height} pad={showPad}/>}
         <ContactShadows
           position={[0, (showPad ? padThickness : 0) + 0.004, 0]}

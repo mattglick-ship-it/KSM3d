@@ -1860,7 +1860,7 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
     setConfig((c) => ({ ...c, [k]: v }));
 
   // Widths over 20' require decorative truss plates — force them on.
-  const trussPlatesRequired = config.width > 20;
+  const trussPlatesRequired = config.width > 16;
   useEffect(() => {
     if (trussPlatesRequired && !config.trussPlates) {
       setConfig((c) => ({ ...c, trussPlates: true }));
@@ -2126,7 +2126,7 @@ export const HAMMER20_BAKED_PIECE_ADJUSTS: Record<string, unknown> = ${adjustsJs
                     id: "trussPlates",
                     label: "Decorative Truss Plates",
                     desc: trussPlatesRequired
-                      ? "Required on pavilions wider than 20′"
+                      ? "Required on pavilions wider than 16′"
                       : "Powder-coated metal plates with bolts at joints",
                     pressed: !!config.trussPlates || trussPlatesRequired,
                     disabled: trussPlatesRequired,

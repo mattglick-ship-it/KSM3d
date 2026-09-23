@@ -39,7 +39,10 @@ for(const [id,source] of Object.entries(expected)) {
  assert.deepEqual(row.basePriceByRoof,source.prices,id+' exact workbook totals');assert.deepEqual(row.sourceCells,source.cells);
  for(const [roof,roofId] of [['shingles','shingle-charcoal-gray'],['metal','metal-black'],['standing_seam','ss-black']]) {
   const quote=computeQuote(selectionFromConfig(designFor(id,{roofId}).config),catalog);
-  assert.equal(quote.total,source.prices[roof],id+' base '+roof);assert.deepEqual(quote.callForPricing,[],id+' base fully priced');
+  assert.equal(quote.lines.find(l=>l.label.startsWith('Base —')).amount,source.prices[roof],id+' base '+roof);
+  const plateCharge=width>16&&!row.decorativeTrussPlates?.included?row.decorativeTrussPlates?.upcharge:0;
+  assert.equal(quote.total,source.prices[roof]+(plateCharge??0),id+' base plus required plates');
+  assert.deepEqual(quote.callForPricing,plateCharge==null?['Decorative Truss Plates']:[],id+' required package price status');
  }
  for(const truss of availableTrusses(width,length))for(const height of availableHeights(width,length)){
   if(width===18){assert.equal(designSchema.safeParse(designFor(id,{truss,height})).success,false,id+" removed from configurator");continue;}
@@ -48,6 +51,16 @@ for(const [id,source] of Object.entries(expected)) {
   assert.equal(computeLinealFeet(design.config).posts,posts*height);
   assert(Number.isFinite(pavilionSummary(design).totalAmount));
  }
+}
+// Required packages survive old saved designs and explicit attempts to omit them.
+for(const {width,length} of CUSTOMER_PAVILION_SIZES){
+ const raw=designFor(`${width}x${length}`,{trussPlates:false});
+ const restored=designSchema.parse(raw);
+ assert.equal(restored.config.trussPlates,width>16,'Plate threshold is strictly above 16 feet');
+ const sel=selectionFromConfig(raw.config),quote=computeQuote({...sel,decorativeTrussPlates:false},catalog);
+ assert.equal(sel.decorativeTrussPlates,width>16,'Selection always includes required plates');
+ assert.equal(quote.lines.some(l=>l.label.startsWith('Decorative Truss Plates')),width>16,'Quote cannot omit required plate package');
+ assert.equal(decodeDesignHash('#design='+btoa(encodeURIComponent(JSON.stringify(raw)))).config.trussPlates,width>16,'Old design links adopt plate requirement');
 }
 for(const id of ['12x32','24x28','28x32'])assert.equal(designSchema.safeParse(designFor(id)).success,false,id+' remains unavailable');
 assert.equal(designSchema.safeParse(designFor('18x20',{truss:'king'})).success,false);
