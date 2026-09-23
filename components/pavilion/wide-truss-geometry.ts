@@ -1,3 +1,4 @@
+import {placeStandardPlate, type PlateRole} from './standard-plate-package';
 import * as THREE from 'three';
 
 type Point = [number, number];
@@ -79,11 +80,11 @@ export function createWideTruss(style:WideTrussStyle,span:number,rise:number,mem
     joints.push({id:'collar',point:[0,collarY],width:profile*1.2,height:profile*1.15});
   }
   joints.push({id:'peak',point:[0,rise-profile*.55],width:profile*.82,height:profile*1.15,peak:true});
-  // Plates are cut against exactly the same roof envelope as the timbers.
-  const plates=joints.map(j=>{
-    const c=Math.cos(j.angle??0),s=Math.sin(j.angle??0);
-    const points:Point[]=[[-j.width/2,-j.height/2],[j.width/2,-j.height/2],[j.width/2,j.height/2],[-j.width/2,j.height/2]].map(([x,y])=>[j.point[0]+x*c-y*s,j.point[1]+x*s+y*c]);
-    return {...j,geometry:extrudeOutline(insideRoof(points),.25*IN)};
+  // Match the shaped 16-foot package, including its plate count. Hammer
+  // packages have paired heel/web plates and an exterior peak, no center plate.
+  const plates=joints.filter(j=>style!=='hammer'||j.id!=='collar').map(j=>{
+    const role:PlateRole=j.peak?'peak':j.id.startsWith('heel')?'heel':j.id==='crown'?'crown':'web';
+    return {...j,...placeStandardPlate(style,role,j.point,pitch,roofTop)};
   });
   return {members,plates,depth,profile,pitch,roofTop};
 }

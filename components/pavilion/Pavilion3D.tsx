@@ -1,3 +1,4 @@
+import {createKingPlatePackage} from './standard-plate-package';
 import { createFittedScrollRafter } from './scroll-rafter-geometry';
 import {createWideTruss,type WideTrussStyle} from './wide-truss-geometry';
 import {expandedFrame,pavilionStations} from '@/lib/pavilion-layout';
@@ -2217,7 +2218,16 @@ function WideTruss({style,span,z,baseY,peakY,color,memberHeightIn=6,plates=false
   return <group name={`wide-${style}-truss`} position={[0,baseY,z]}>
     {([-1,1] as const).map(side=><PlumbRafter key={side} iy={rise} outerX={half+16*IN} pitchAngle={pitchAngle} t={model.profile} depth={model.depth} side={side} color={color} seatX={half+4*IN} seatY={-seatLower} piece={`wide.${style}.rafter.${side<0?'l':'r'}`} tailStyle={tailStyle} parametricTail />)}
     {model.members.map(m=><mesh key={m.id} geometry={m.geometry} castShadow receiveShadow><WoodMaterial color={color} category="truss" piece={m.id} singleMaterial /></mesh>)}
-    {plates&&model.plates.flatMap(p=>(p.peak?(isOuter?[exteriorFace]:[]):[1,-1]).map(face=><mesh key={p.id+face} geometry={p.geometry} position={[0,0,face*(model.depth/2+.125*IN+.0005)]} castShadow receiveShadow><meshStandardMaterial color="#141414" roughness={.4} metalness={.85}/></mesh>))}
+    {plates&&model.plates.flatMap(p=>(p.peak?(isOuter?[exteriorFace]:[]):[1,-1]).map(face=><mesh key={p.id+face} geometry={p.geometry} position={[0,0,face*(model.depth/2+p.thickness/2+.0005)]} castShadow receiveShadow><meshStandardMaterial color="#141414" roughness={.4} metalness={.85}/></mesh>))}
+  </group>;
+}
+function MatchingKingPlates({span,rise,profile,depth,isOuter,face}: {span:number;rise:number;profile:number;depth:number;isOuter:boolean;face:1|-1|0}) {
+  const plates=useMemo(()=>createKingPlatePackage(span,rise,profile),[span,rise,profile]);
+  useEffect(()=>()=>plates.forEach(p=>p.geometry.dispose()),[plates]);
+  return <group name="king-plates-matched-16">
+    {plates.flatMap(p=>(p.peak?(isOuter&&face!==0?[face]:[]):[1,-1]).map(side=><mesh
+      key={p.id+side} geometry={p.geometry} position={[0,0,side*(depth/2+p.thickness/2+.0005)]}
+      castShadow receiveShadow><meshStandardMaterial color="#141414" roughness={.4} metalness={.85}/></mesh>))}
   </group>;
 }
 function RuntimeArchTruss(props:Omit<Parameters<typeof WideTruss>[0],'style'>) {
@@ -3620,7 +3630,8 @@ function KingTruss({
 
       {strut(1)}
       {strut(-1)}
-      {plates && (() => {
+      {plates && span > 16 * .3048 - .3 && <MatchingKingPlates span={span} rise={rise} profile={profile} depth={thick} isOuter={isOuter} face={peakPlateFace} />}
+      {plates && span <= 16 * .3048 - .3 && (() => {
         const plateThick = 0.5 * IN;
         const zPush = thick / 2 + plateThick / 2;
         // Joint anchors in truss-local meters.
